@@ -1,0 +1,142 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+Description: >
+  account-management-kms
+
+  A set of KMS resources that should be deployed up the environments.
+
+Parameters:
+  Environment:
+    Description: "The environment type"
+    Type: "String"
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  CodeSigningConfigArn:
+    Type: String
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+    Default: "none"
+    
+  PermissionsBoundary:
+    Type: String
+    Description: >
+      The ARN of the permissions boundary to apply to any role created by the template
+    Default: "none"
+    
+Conditions:
+  UseCodeSigning:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref CodeSigningConfigArn
+          - "none"
+
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
+
+Globals:
+  Function:
+    CodeSigningConfigArn: !If
+      - UseCodeSigning
+      - !Ref CodeSigningConfigArn
+      - !Ref AWS::NoValue
+    PermissionsBoundary: !If
+      - UsePermissionsBoundary
+      - !Ref PermissionsBoundary
+      - !Ref AWS::NoValue
+
+Resources:
+  AMAKMSSigningKey:
+    Type: AWS::KMS::Key
+    Properties: 
+      Description: KMS signing key for Account Management JWT Authentication
+      Enabled: true
+      EnableKeyRotation: false
+      KeyPolicy: 
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal: 
+            AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
+          Action:
+            - 'kms:Create*'
+            - 'kms:Describe*'
+            - 'kms:Enable*'
+            - 'kms:List*'
+            - 'kms:Put*'
+            - 'kms:Update*'
+            - 'kms:Revoke*'
+            - 'kms:Disable*'
+            - 'kms:Get*'
+            - 'kms:Delete*'
+            - 'kms:ScheduleKeyDeletion'
+            - 'kms:CancelKeyDeletion'
+          Resource:
+          - "*"
+# Create a non-root user that has access to KMS policy
+#        Effect: Allow
+#        Principal:
+#          AWS: 'arn:aws:iam::${AWS::AccountId}:role/ExecutionRole'
+#        Action:
+#          - 'kms:Sign'
+#          - 'kms:Verify'
+#          - 'kms:DescribeKey'
+#        Resource: '*'
+      KeySpec: RSA_2048
+      KeyUsage: SIGN_VERIFY
+#      MultiRegion: false
+      PendingWindowInDays: 30
+      Tags:
+        - Key: Environment 
+          Value: !Sub ${Environment}
+        - Key: Application
+          Value: Account Management
+  AMAKMSSigningKeyAlias:
+    Type: 'AWS::KMS::Alias'
+    Properties:
+      AliasName: "alias/${Environment}-account-management-signing-key"
+      TargetKeyId: !Ref AMAKMSSigningKey
+
+  AMAKMSSigningKeySSM:
+    Type: AWS::SSM::Parameter
+    Properties:    
+      Description: The ARN of the AMA SigningKey
+      Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyArn"
+      Type: String
+      Value: !GetAtt AMAKMSSigningKey.Arn
+  AMAKMSSigningKeyIdSSM:
+    Type: AWS::SSM::Parameter
+    Properties:    
+      Description: The Id of the AMA SigningKey
+      Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyId"
+      Type: String
+      Value: !Ref AMAKMSSigningKey
+  AMAKMSSigningKeyAliasSSM:
+    Type: AWS::SSM::Parameter
+    Properties:    
+      Description: The Alias of the AMA SigningKey
+      Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyAlias"
+      Type: String
+      Value: !Ref AMAKMSSigningKeyAlias
+
+Outputs:
+  AMASigningKeyArn:
+    Description: "The Arn of the AMA signing key"
+    Value: !GetAtt AMAKMSSigningKey.Arn
+    Export:
+      Name: !Sub "${AWS::StackName}-signing-key"
+  AMASigningKeyId:
+    Description: "The Id of the AMA signing key"
+    Value: !Ref AMAKMSSigningKey
+    Export:
+      Name: !Sub "${AWS::StackName}-signing-key-id"
+  AMASigningKeyAlias:
+    Description: "The Alias of the AMA signing key"
+    Value: !Ref AMAKMSSigningKeyAlias
