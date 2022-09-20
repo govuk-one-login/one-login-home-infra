@@ -1,7 +1,8 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Transform: AWS::Serverless-2016-10-31
+
 Description: >
-  KMS resources used by the Authentication Account Management application.
+  KMS resources used by the Authentication Account Management (AAM) application.
+
 Parameters:
   Environment:
     Description: "The name of the environment to deploy to"
@@ -38,25 +39,14 @@ Conditions:
           - !Ref PermissionsBoundary
           - "none"
 
-Globals:
-  Function:
-    CodeSigningConfigArn: !If
-      - UseCodeSigning
-      - !Ref CodeSigningConfigArn
-      - !Ref AWS::NoValue
-    PermissionsBoundary: !If
-      - UsePermissionsBoundary
-      - !Ref PermissionsBoundary
-      - !Ref AWS::NoValue
-
 Resources:
-  AMAKMSSigningKey:
+  AAMKMSSigningKey:
     Type: AWS::KMS::Key
     #checkov:skip=CKV_AWS_7:Ensure rotation for customer created CMKs is enabled
 #    DeletionPolicy: Retain
 #    UpdateReplacePolicy: Retain
     Properties:
-      Description: KMS signing key for Account Management JWT Authentication
+      Description: KMS signing key for Authentication Account Management (AAM) JWT Authentication
       Enabled: true
       EnableKeyRotation: false
       KeySpec: RSA_2048
@@ -96,61 +86,62 @@ Resources:
 
       Tags:
         - Key: Product
-          Value: GOV.UK Accounts
-        - Key: "Name"
-          Value: !Join
-            - "-"
-            - - !Ref AWS::StackName
-              - "AMAKMSSigningKey"
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
         - Key: Environment
           Value: !Ref Environment
-        - Key: Application
-          Value: Authorisation Account Management
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-AAMKMSSigningKey"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
         - Key: Source
-          Value: "alphagov/di-accounts-infra/account-management-kms/template.yaml"
+          Value: alphagov/di-accounts-infra/account-management-kms/template.yaml
+        - Key: Application
+          Value: Authentication Account Management
         - Key: CheckovRulesToSkip
           Value: CKV_AWS_7
 
-  AMAKMSSigningKeyAlias:
+  AAMKMSSigningKeyAlias:
     Type: 'AWS::KMS::Alias'
     Properties:
-      AliasName: !Sub "alias/${Environment}-account-management-signing-key"
-      TargetKeyId: !Ref AMAKMSSigningKey
+      AliasName: !Sub "alias/${Environment}-aam-signing-key"
+      TargetKeyId: !Ref AAMKMSSigningKey
 
-  AMAKMSSigningKeySSM:
+  AAMKMSSigningKeySSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The ARN of the AMA SigningKey
+      Description: The ARN of the AAM Signing Key
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyArn"
       Type: String
-      Value: !GetAtt AMAKMSSigningKey.Arn
+      Value: !GetAtt AAMKMSSigningKey.Arn
 
-  AMAKMSSigningKeyIdSSM:
+  AAMKMSSigningKeyIdSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The Id of the AMA SigningKey
+      Description: The Id of the AAM Signing Key
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyId"
       Type: String
-      Value: !Ref AMAKMSSigningKey
-  AMAKMSSigningKeyAliasSSM:
+      Value: !Ref AAMKMSSigningKey
+  AAMKMSSigningKeyAliasSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The Alias of the AMA SigningKey
+      Description: The Alias of the AAM Signing Key
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyAlias"
       Type: String
-      Value: !Ref AMAKMSSigningKeyAlias
+      Value: !Ref AAMKMSSigningKeyAlias
 
 Outputs:
-  AMASigningKeyArn:
-    Description: "The Arn of the AMA signing key"
-    Value: !GetAtt AMAKMSSigningKey.Arn
+  AAMSigningKeyArn:
+    Description: "The ARN of the AAM Signing key"
+    Value: !GetAtt AAMKMSSigningKey.Arn
     Export:
-      Name: !Sub "${AWS::StackName}-signing-key"
-  AMASigningKeyId:
-    Description: "The Id of the AMA signing key"
-    Value: !Ref AMAKMSSigningKey
+      Name: !Sub "${AWS::StackName}-signing-key-arn"
+  AAMSigningKeyId:
+    Description: "The Id of the AAM Signing key"
+    Value: !Ref AAMKMSSigningKey
     Export:
       Name: !Sub "${AWS::StackName}-signing-key-id"
-  AMASigningKeyAlias:
-    Description: "The Alias of the AMA signing key"
-    Value: !Ref AMAKMSSigningKeyAlias
+  AAMSigningKeyAlias:
+    Description: "The Alias of the AAM Signing key"
+    Value: !Ref AAMKMSSigningKeyAlias
