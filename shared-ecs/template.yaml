@@ -75,16 +75,29 @@ Resources:
         Statement:
           - Effect: Allow
             Principal:
-              Service: [ecs-tasks.amazonaws.com]
+              Service: ecs-tasks.amazonaws.com
             Action:
               - sts:AssumeRole
       ManagedPolicyArns:
-        - 'arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy'
+        - "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+      Policies:
+        - PolicyName: CreateLogGroup
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - logs:CreateLogGroup
+                Resource: !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:*"
+      PermissionsBoundary: !If
+        - UsePermissionsBoundary
+        - !Ref PermissionsBoundary
+        - !Ref AWS::NoValue
       Tags:
         - Key: Product
           Value: GOV.UK Sign In
         - Key: System
-          Value: Accounts
+          Value:  Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Owner
@@ -102,18 +115,13 @@ Resources:
       Type: String
       Value: !Ref ECSCluster
       Tags:
-        - Key: Product
-          Value: GOV.UK Sign In
-        - Key: System
-          Value: Accounts
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
-        - Key: Source
-          Value: alphagov/di-accounts-infra/shared-ecs/template.yaml
-        - Key: Application
-          Value: Shared
+        Product: GOV.UK Sign In
+        System: Accounts
+        Environment: !Ref Environment
+        Owner: govuk-accounts-tech@digital.cabinet-office.gov.uk
+        Source: alphagov/di-accounts-infra/shared-ecs/template.yaml
+        Application: Shared
+
 Outputs:
 
   ECSCluster:
@@ -124,6 +132,6 @@ Outputs:
 
   ExecutionRole:
     Description: A reference to ECS Cluster Role
-    Value: !GetAtt   ExecutionRole.Arn
+    Value: !GetAtt ExecutionRole.Arn
     Export:
       Name: !Sub "${Environment}-accounts-ecs-cluster-role"
