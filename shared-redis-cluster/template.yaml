@@ -14,6 +14,13 @@ Parameters:
       - "staging"
       - "integration"
       - "production"
+
+  VpcStackName:
+    Description: >
+      The name of the stack that defines the VPC in which this container will
+      run.
+    Type: String
+
   CodeSigningConfigArn:
     Type: String
     Description: >
@@ -208,9 +215,17 @@ Resources:
               ArnLike:
                 "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
       Tags:
-        - Key: Service
-          Value: ci/cd
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-KmsKey"
+          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
         - Key: Source
-          Value: alphagov/di-devplatform-demo-sam-app/node/template.yaml
+          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+        - Key: Application
+          Value: Shared
