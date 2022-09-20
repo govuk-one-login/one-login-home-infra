@@ -21,13 +21,13 @@ Parameters:
     Description: >
       The ARN of the Code Signing Config to use, provided by the deployment pipeline
     Default: "none"
-    
+
   PermissionsBoundary:
     Type: String
     Description: >
       The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
-    
+
 Conditions:
   UseCodeSigning:
     Fn::Not:
@@ -55,15 +55,18 @@ Globals:
 Resources:
   AMAKMSSigningKey:
     Type: AWS::KMS::Key
-    Properties: 
+    #checkov:skip=CKV_AWS_7:Ensure rotation for customer created CMKs is enabled
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
       Description: KMS signing key for Account Management JWT Authentication
       Enabled: true
       EnableKeyRotation: false
-      KeyPolicy: 
+      KeyPolicy:
         Version: "2012-10-17"
         Statement:
         - Effect: Allow
-          Principal: 
+          Principal:
             AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root'
           Action:
             - 'kms:Create*'
@@ -94,33 +97,36 @@ Resources:
 #      MultiRegion: false
       PendingWindowInDays: 30
       Tags:
-        - Key: Environment 
+        - Key: Environment
           Value: !Sub ${Environment}
         - Key: Application
           Value: Account Management
+        - Key: CheckovRulesToSkip
+          Value: CKV_AWS_7
+
   AMAKMSSigningKeyAlias:
     Type: 'AWS::KMS::Alias'
     Properties:
-      AliasName: "alias/${Environment}-account-management-signing-key"
+      AliasName: !Sub "alias/${Environment}-account-management-signing-key"
       TargetKeyId: !Ref AMAKMSSigningKey
 
   AMAKMSSigningKeySSM:
     Type: AWS::SSM::Parameter
-    Properties:    
+    Properties:
       Description: The ARN of the AMA SigningKey
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyArn"
       Type: String
       Value: !GetAtt AMAKMSSigningKey.Arn
   AMAKMSSigningKeyIdSSM:
     Type: AWS::SSM::Parameter
-    Properties:    
+    Properties:
       Description: The Id of the AMA SigningKey
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyId"
       Type: String
       Value: !Ref AMAKMSSigningKey
   AMAKMSSigningKeyAliasSSM:
     Type: AWS::SSM::Parameter
-    Properties:    
+    Properties:
       Description: The Alias of the AMA SigningKey
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyAlias"
       Type: String
