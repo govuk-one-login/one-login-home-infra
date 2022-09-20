@@ -1,0 +1,218 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  The Accounts shared Redis cluster in the ${Environment} environment.
+
+Parameters:
+  Environment:
+    Description: "The name of the environment to deploy to"
+    Type: "String"
+    Default: build
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  CodeSigningConfigArn:
+    Type: String
+    Description: >
+      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+    Default: "none"
+
+  PermissionsBoundary:
+    Type: String
+    Description: >
+      The ARN of the permissions boundary to apply to any role created by the template
+    Default: "none"
+
+Conditions:
+  UseCodeSigning:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref CodeSigningConfigArn
+          - "none"
+
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
+
+Resources:
+  ApplicationCacheSubnetGroup:
+    Type: AWS::ElastiCache::SubnetGroup
+    Properties:
+      CacheSubnetGroupName: application-cache-subnet-group
+      Description: Cache Subnet Group
+      SubnetIds:
+        - Fn::ImportValue:
+            !Sub "${VpcStackName}-PrivateSubnetIdA"
+        - Fn::ImportValue:
+            !Sub "${VpcStackName}-PrivateSubnetIdB"
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+        - Key: Source
+          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+        - Key: Application
+          Value: Shared
+
+  ApplicationParameterGroup:
+    Type: AWS::ElastiCache::ParameterGroup
+    Properties:
+      CacheParameterGroupFamily: redis6.x
+      Description: Hello! This is a nice description
+      Properties:
+        cluster-enabled: "yes"
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+        - Key: Source
+          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+        - Key: Application
+          Value: Shared
+
+  ApplicationElastiCacheLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      KmsKeyId: !GetAtt KmsKey.Arn
+      LogGroupName: elasticache-replication-group-logs
+      RetentionInDays: 1
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+        - Key: Source
+          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+        - Key: Application
+          Value: Shared
+
+  ApplicationAuthPass:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: elasticache-application
+      Description: Random password for elastiCache
+      GenerateSecretString:
+        ExcludeLowercase: false
+        ExcludeNumbers: false
+        ExcludePunctuation: true
+        ExcludeUppercase: false
+        IncludeSpace: false
+        PasswordLength: 17
+      KmsKeyId: !GetAtt KmsKey.Arn
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+        - Key: Source
+          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+        - Key: Application
+          Value: Shared
+
+  ApplicationReplicationGroup:
+    Type: AWS::ElastiCache::ReplicationGroup
+    Properties:
+      TransitEncryptionEnabled: true
+      AtRestEncryptionEnabled: true
+      AuthToken: !Sub '{{resolve:secretsmanager:${ApplicationAuthPass}}}'
+      AutomaticFailoverEnabled: true
+      CacheNodeType: cache.t2.micro
+      CacheSubnetGroupName: !Ref ApplicationCacheSubnetGroup
+      CacheParameterGroupName: !Ref ApplicationParameterGroup
+      Engine: redis
+      LogDeliveryConfigurations:
+        - DestinationDetails:
+            CloudWatchLogsDetails:
+              LogGroup: !Ref ApplicationElastiCacheLogGroup
+          DestinationType: cloudwatch-logs
+          LogFormat: json
+          LogType: engine-log
+      MultiAZEnabled: true
+      NumNodeGroups: 1
+      ReplicasPerNodeGroup: 1
+      ReplicationGroupDescription: Replication group for elasticache
+      SecurityGroupIds:
+        - Fn::ImportValue:
+            !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
+      Tags:
+        - Key: Product
+          Value: GOV.UK Sign In
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+        - Key: Owner
+          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+        - Key: Source
+          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+        - Key: Application
+          Value: Shared
+
+  KmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: !Sub "logs.${AWS::Region}.amazonaws.com"
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "*"
+            Condition:
+              ArnLike:
+                "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+      Tags:
+        - Key: Service
+          Value: ci/cd
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-KmsKey"
+        - Key: Source
+          Value: alphagov/di-devplatform-demo-sam-app/node/template.yaml
+
+Outputs:
