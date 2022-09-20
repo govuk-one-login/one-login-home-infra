@@ -1,15 +1,12 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Transform: AWS::Serverless-2016-10-31
 Description: >
-  account-management-kms
-
-  A set of KMS resources that should be deployed up the environments.
-
+  KMS resources used by the Authentication Account Management application.
 Parameters:
   Environment:
-    Description: "The environment type"
+    Description: "The name of the environment to deploy to"
     Type: "String"
-    Default: dev
+    Default: build
     AllowedValues:
       - "dev"
       - "build"
@@ -56,12 +53,16 @@ Resources:
   AMAKMSSigningKey:
     Type: AWS::KMS::Key
     #checkov:skip=CKV_AWS_7:Ensure rotation for customer created CMKs is enabled
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
+#    DeletionPolicy: Retain
+#    UpdateReplacePolicy: Retain
     Properties:
       Description: KMS signing key for Account Management JWT Authentication
       Enabled: true
       EnableKeyRotation: false
+      KeySpec: RSA_2048
+      KeyUsage: SIGN_VERIFY
+      MultiRegion: false
+      PendingWindowInDays: 30
       KeyPolicy:
         Version: "2012-10-17"
         Statement:
@@ -92,15 +93,21 @@ Resources:
 #          - 'kms:Verify'
 #          - 'kms:DescribeKey'
 #        Resource: '*'
-      KeySpec: RSA_2048
-      KeyUsage: SIGN_VERIFY
-#      MultiRegion: false
-      PendingWindowInDays: 30
+
       Tags:
+        - Key: Product
+          Value: GOV.UK Accounts
+        - Key: "Name"
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "AMAKMSSigningKey"
         - Key: Environment
-          Value: !Sub ${Environment}
+          Value: !Ref Environment
         - Key: Application
-          Value: Account Management
+          Value: Authorisation Account Management
+        - Key: Source
+          Value: "alphagov/di-accounts-infra/account-management-kms/template.yaml"
         - Key: CheckovRulesToSkip
           Value: CKV_AWS_7
 
@@ -117,6 +124,7 @@ Resources:
       Name: !Sub "/${Environment}/${AWS::StackName}/KMS/SigningKeyArn"
       Type: String
       Value: !GetAtt AMAKMSSigningKey.Arn
+
   AMAKMSSigningKeyIdSSM:
     Type: AWS::SSM::Parameter
     Properties:
