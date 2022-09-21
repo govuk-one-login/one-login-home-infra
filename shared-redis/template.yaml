@@ -177,7 +177,7 @@ Resources:
         - DestinationDetails:
             CloudWatchLogsDetails:
               LogGroup: !Ref CacheLogGroup
-          DestinationType: cloudwatch-logscfn
+          DestinationType: cloudwatch-logs
           LogFormat: json
           LogType: engine-log
       MultiAZEnabled: true
