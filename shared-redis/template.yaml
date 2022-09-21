@@ -1,8 +1,7 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
 Description: >
-  The Accounts shared Redis cluster in the ${Environment} environment.
-
+  The clustered Redis cache.
 Parameters:
   Environment:
     Description: "The name of the environment to deploy to"
@@ -17,9 +16,24 @@ Parameters:
 
   VpcStackName:
     Description: >
-      The name of the stack that defines the VPC in which this container will
-      run.
+      The name of the stack that defines the VPC where this redis cluster will be
+      deployed.
     Type: String
+
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: "GOV.UK Sign In"
+
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
 
   CodeSigningConfigArn:
     Type: String
@@ -47,11 +61,11 @@ Conditions:
           - "none"
 
 Resources:
-  ApplicationCacheSubnetGroup:
+  CacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
-      CacheSubnetGroupName: application-cache-subnet-group
-      Description: Cache Subnet Group
+      CacheSubnetGroupName: !Sub ${AWS::StackName}-cache-subnet-group
+      Description: !Sub Subnet Group for the ${AWS::StackName} cache
       SubnetIds:
         - Fn::ImportValue:
             !Sub "${VpcStackName}-PrivateSubnetIdA"
@@ -59,138 +73,145 @@ Resources:
             !Sub "${VpcStackName}-PrivateSubnetIdB"
       Tags:
         - Key: Product
-          Value: GOV.UK Sign In
+          Value: !Ref ProductTagValue
         - Key: System
           Value: Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+          Value: !Sub "${AWS::StackName}-cache-subnet-group"
         - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+          Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
 
-  ApplicationParameterGroup:
+  CacheParameterGroup:
     Type: AWS::ElastiCache::ParameterGroup
     Properties:
       CacheParameterGroupFamily: redis6.x
-      Description: Hello! This is a nice description
+      Description: !Sub ${AWS::StackName} cache settings
       Properties:
-        cluster-enabled: "yes"
+        cluster-enabled: yes
       Tags:
         - Key: Product
-          Value: GOV.UK Sign In
+          Value: !Ref ProductTagValue
         - Key: System
           Value: Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+          Value: !Sub ${AWS::StackName}-cache-parameter-group
         - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+          Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
 
-  ApplicationElastiCacheLogGroup:
+  CacheLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       KmsKeyId: !GetAtt KmsKey.Arn
-      LogGroupName: elasticache-replication-group-logs
+      LogGroupName: !Sub ${AWS::StackName}-cache-log-group
       RetentionInDays: 1
       Tags:
         - Key: Product
-          Value: GOV.UK Sign In
+          Value: !Ref ProductTagValue
         - Key: System
           Value: Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+          Value: !Sub "${AWS::StackName}-cache-log-group"
         - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+          Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
 
-  ApplicationAuthPass:
+  CachePasswordSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: elasticache-application
-      Description: Random password for elastiCache
+      Name: !Sub ${AWS::StackName}-cache-password
+      Description: !Sub Random password for the ${AWS::StackName} cache
       GenerateSecretString:
         ExcludeLowercase: false
         ExcludeNumbers: false
         ExcludePunctuation: true
         ExcludeUppercase: false
         IncludeSpace: false
-        PasswordLength: 17
-      KmsKeyId: !GetAtt KmsKey.Arn
+        RequireEachIncludedType: true
+        PasswordLength: 32
+      KmsKeyId: KmsKey
       Tags:
         - Key: Product
-          Value: GOV.UK Sign In
+          Value: !Ref ProductTagValue
         - Key: System
           Value: Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+          Value: !Sub "${AWS::StackName}-cache-password"
         - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+          Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
 
-  ApplicationReplicationGroup:
+  CacheReplicationGroup:
     Type: AWS::ElastiCache::ReplicationGroup
     Properties:
-      TransitEncryptionEnabled: true
       AtRestEncryptionEnabled: true
-      AuthToken: !Sub '{{resolve:secretsmanager:${ApplicationAuthPass}}}'
+      AuthToken: !Sub '{{resolve:secretsmanager:${CachePasswordSecret}}}'
       AutomaticFailoverEnabled: true
-      CacheNodeType: cache.t2.micro
-      CacheSubnetGroupName: !Ref ApplicationCacheSubnetGroup
-      CacheParameterGroupName: !Ref ApplicationParameterGroup
+      CacheNodeType: cache.t2.micro #cache.t2.small
+      CacheParameterGroupName: !Ref CacheParameterGroup
+      CacheSubnetGroupName: !Ref CacheSubnetGroup
       Engine: redis
+      EngineVersion: 6.x
       LogDeliveryConfigurations:
         - DestinationDetails:
             CloudWatchLogsDetails:
-              LogGroup: !Ref ApplicationElastiCacheLogGroup
-          DestinationType: cloudwatch-logs
+              LogGroup: !Ref CacheLogGroup
+          DestinationType: cloudwatch-logscfn
           LogFormat: json
           LogType: engine-log
       MultiAZEnabled: true
+#      NotificationTopicArn:  TODO
       NumNodeGroups: 1
+      PreferredMaintenanceWindow: "mon:02:00-mon:03:00"
+      Port: 6379
       ReplicasPerNodeGroup: 1
-      ReplicationGroupDescription: Replication group for elasticache
+      ReplicationGroupDescription: !Sub Replication group for the ${AWS::StackName} cache
       SecurityGroupIds:
         - Fn::ImportValue:
             !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
+      TransitEncryptionEnabled: true
       Tags:
         - Key: Product
-          Value: GOV.UK Sign In
+          Value: !Ref ProductTagValue
         - Key: System
           Value: Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+          Value: !Sub "${AWS::StackName}-cache-replication-group"
         - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+          Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
 
   KmsKey:
     Type: AWS::KMS::Key
     Properties:
+      Description: !Sub KMS key used to protect cache and logging data created in ${AWS::StackName}
+      Enabled: true
       EnableKeyRotation: true
       KeyPolicy:
         Version: 2012-10-17
@@ -216,16 +237,33 @@ Resources:
                 "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
       Tags:
         - Key: Product
-          Value: GOV.UK Sign In
+          Value: !Ref ProductTagValue
         - Key: System
           Value: Accounts
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-accounts-redis-cluster"
+          Value: !Sub "${AWS::StackName}-cache-kms-key"
         - Key: Owner
-          Value: govuk-accounts-tech@digital.cabinet-office.gov.uk
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+          Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
+
+Outputs:
+  CachePasswordSecret:
+    Description: "The ARN of the Cache's password secret"
+    Value: !Ref CachePasswordSecret
+    Export:
+      Name: !Sub "${AWS::StackName}-cache-password-secret-arn"
+  CacheEndpointAddress:
+    Description: "The DNS hostname of the cache node"
+    Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Address
+    Export:
+      Name: !Sub "${AWS::StackName}-cache-endpoint-address"
+  CacheEndpointPort:
+    Description: "The port number that the cache engine is listening on"
+    Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
+    Export:
+      Name: !Sub "${AWS::StackName}-cache-endpoint-port"
