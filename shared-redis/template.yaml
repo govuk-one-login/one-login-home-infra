@@ -33,7 +33,7 @@ Parameters:
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
-    Default: alphagov/di-accounts-infra/shared-redis-cluster/template.yaml
+    Default: alphagov/di-accounts-infra/shared-redis/template.yaml
 
   CodeSigningConfigArn:
     Type: String
@@ -114,7 +114,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       KmsKeyId: !GetAtt KmsKey.Arn
-      LogGroupName: !Sub ${AWS::StackName}-cache-log-group
+      LogGroupName: !Sub gds-digitalidentity-${AWS::StackName}-cache-logs
       RetentionInDays: 1
       Tags:
         - Key: Product
@@ -124,7 +124,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-log-group"
+          Value: !Sub "gds-digitalidentity-${AWS::StackName}-cache-logs"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -187,6 +187,7 @@ Resources:
       Port: 6379
       ReplicasPerNodeGroup: 1
       ReplicationGroupDescription: !Sub Replication group for the ${AWS::StackName} cache
+      ReplicationGroupId: !Sub "${AWS::StackName}-cache-cluster"
       SecurityGroupIds:
         - Fn::ImportValue:
             !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
