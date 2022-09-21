@@ -93,7 +93,7 @@ Resources:
       CacheParameterGroupFamily: redis6.x
       Description: !Sub ${AWS::StackName} cache settings
       Properties:
-        cluster-enabled: yes
+        cluster-enabled: "yes"
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -145,7 +145,7 @@ Resources:
         IncludeSpace: false
         RequireEachIncludedType: true
         PasswordLength: 32
-      KmsKeyId: KmsKey
+      KmsKeyId: !GetAtt KmsKey.Arn
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
