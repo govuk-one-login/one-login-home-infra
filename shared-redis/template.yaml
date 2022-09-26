@@ -367,3 +367,48 @@ Outputs:
     Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
     Export:
       Name: !Sub "${AWS::StackName}-cache-endpoint-port"
+  RedisMasterHost:
+    Description: "The logical name of the Redis Master Host"
+      Value: !Ref RedisMasterHost
+      Export:
+        Name: !Join
+          - "-"
+          - - !Ref Environment
+            - !Ref RedisKey
+            - "redis-master-host"
+  RedisReplicaHost:
+    Description: "The logical name of the Redis Replica Host"
+      Value: !Ref RedisReplicaHost
+      Export:
+        Name: !Join
+          - "-"
+          - - !Ref Environment
+            - !Ref RedisKey
+            - "redis-replica-host"
+  RedisTls:
+    Description: "The logical name of the Redis TLS"
+      Value: !Ref RedisTls
+      Export:
+        Name: !Join
+          - "-"
+          - - !Ref Environment
+            - !Ref RedisKey
+            - "redis-tls"
+  RedisPassword:
+    Description: "The logical name of the Redis Password"
+      Value: !Ref RedisPassword
+      Export:
+        Name: !Join
+          - "-"
+          - - !Ref Environment
+            - !Ref RedisKey
+            - "redis-password"
+  RedisPort:
+    Description: "The logical name of the Redis Port"
+      Value: !Ref RedisPort
+      Export:
+        Name: !Join
+          - "-"
+          - - !Ref Environment
+            - !Ref RedisKey
+            - "redis-port"
