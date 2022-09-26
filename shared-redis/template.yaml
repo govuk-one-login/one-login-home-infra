@@ -46,6 +46,16 @@ Parameters:
     Description: >
       The ARN of the permissions boundary to apply to any role created by the template
     Default: "none"
+    
+  RedisKey:
+    Type: String
+    Description: Value of Redis Key
+    Default: "account-management-frontend" 
+    
+  RedisPortNumber:
+    Type: Number
+    Description: Value of the Redis Port
+    Default: 6379
 
 Conditions:
   UseCodeSigning:
@@ -251,6 +261,95 @@ Resources:
           Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
+
+  RedisMasterHost:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-master-host"
+      Type: "SecureString"
+      # I think we need to omit KmsKeyId as this is not a property of AWS::SSM::Parameter
+      KmsKeyId: !GetAtt KmsKey.Arn
+      Value: Fn::GetAtt CacheReplicationGroup.PrimaryEndPoint.Address
+      Tags:
+        Environment: !Ref Environment
+        Application: "Account Management"
+        
+  RedisReplicaHost:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-replica-host"
+      Type: "SecureString"
+      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
+      KmsKeyId: !GetAtt KmsKey.Arn
+      Value: Fn::GetAtt CacheReplicationGroup.ReaderEndPoint.Address
+      Tags:
+        Environment: !Ref Environment
+        Application: "Account Management"
+        
+  RedisTls:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-tls"
+      Type: "SecureString"
+      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
+      KmsKeyId: !GetAtt KmsKey.Arn
+      Value: "true"
+      Tags:
+        Environment: !Ref Environment
+        Application: "Account Management"
+    
+  RedisPassword:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-password"
+      Type: "SecureString"
+      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
+      KmsKeyId: !GetAtt KmsKey.Arn
+      Value: !Ref RedisSecret
+      Tags:
+        Environment: !Ref Environment
+        Application: "Account Management"
+      
+  RedisPort:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-port"
+      Type: "SecureString"
+      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
+      KmsKeyId: !GetAtt KmsKey.Arn
+      Value: !Ref RedisPortNumber
+      Tags:
+        Environment: !Ref Environment
+        Application: "Account Management"
+        
+  RedisSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: MySecretForRedis
+      Description: "This secret has a dynamically generated secret password for Redis."
+      GenerateSecretString:
+        GenerateStringKey: "password"
+        PasswordLength: 32
 
 Outputs:
   CachePasswordSecret:
