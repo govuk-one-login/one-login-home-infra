@@ -130,15 +130,15 @@ Resources:
                   - "ssm:GetParameters"
                 Resource:
                   - Fn::ImportValue:
-                      - "${Environment}-account-management-frontend-redis-master-host"
+                      !Sub "${Environment}-account-management-frontend-redis-master-host"
                   - Fn::ImportValue:
-                      - "${Environment}-account-management-frontend-redis-replica-host"
+                      !Sub "${Environment}-account-management-frontend-redis-replica-host"
                   - Fn::ImportValue:
-                      - "${Environment}-account-management-frontend-redis-tls"
+                      !Sub "${Environment}-account-management-frontend-redis-tls"
                   - Fn::ImportValue:
-                      - "${Environment}-account-management-frontend-redis-password"
+                      !Sub "${Environment}-account-management-frontend-redis-password"
                   - Fn::ImportValue:
-                      - "${Environment}-account-management-frontend-redis-port"
+                      !Sub "${Environment}-account-management-frontend-redis-port"
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
