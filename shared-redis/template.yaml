@@ -270,9 +270,7 @@ Resources:
         - - !Ref Environment
           - !Ref RedisKey
           - "redis-master-host"
-      Type: "SecureString"
-      # I think we need to omit KmsKeyId as this is not a property of AWS::SSM::Parameter
-      KmsKeyId: !GetAtt KmsKey.Arn
+      Type: "String"
       Value: Fn::GetAtt CacheReplicationGroup.PrimaryEndPoint.Address
       Tags:
         Environment: !Ref Environment
@@ -286,9 +284,7 @@ Resources:
         - - !Ref Environment
           - !Ref RedisKey
           - "redis-replica-host"
-      Type: "SecureString"
-      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
-      KmsKeyId: !GetAtt KmsKey.Arn
+      Type: "String"
       Value: Fn::GetAtt CacheReplicationGroup.ReaderEndPoint.Address
       Tags:
         Environment: !Ref Environment
@@ -302,26 +298,8 @@ Resources:
         - - !Ref Environment
           - !Ref RedisKey
           - "redis-tls"
-      Type: "SecureString"
-      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
-      KmsKeyId: !GetAtt KmsKey.Arn
+      Type: "String"
       Value: "true"
-      Tags:
-        Environment: !Ref Environment
-        Application: "Account Management"
-    
-  RedisPassword:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Join
-        - "-"
-        - - !Ref Environment
-          - !Ref RedisKey
-          - "redis-password"
-      Type: "SecureString"
-      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
-      KmsKeyId: !GetAtt KmsKey.Arn
-      Value: !Ref RedisSecret
       Tags:
         Environment: !Ref Environment
         Application: "Account Management"
@@ -334,22 +312,11 @@ Resources:
         - - !Ref Environment
           - !Ref RedisKey
           - "redis-port"
-      Type: "SecureString"
-      # I think we need to omit KmsKeyId as it's not a property of AWS::SSM::Parameter
-      KmsKeyId: !GetAtt KmsKey.Arn
+      Type: "String"
       Value: !Ref RedisPortNumber
       Tags:
         Environment: !Ref Environment
         Application: "Account Management"
-        
-  RedisSecret:
-    Type: AWS::SecretsManager::Secret
-    Properties:
-      Name: MySecretForRedis
-      Description: "This secret has a dynamically generated secret password for Redis."
-      GenerateSecretString:
-        GenerateStringKey: "password"
-        PasswordLength: 32
 
 Outputs:
   CachePasswordSecret:
@@ -369,46 +336,37 @@ Outputs:
       Name: !Sub "${AWS::StackName}-cache-endpoint-port"
   RedisMasterHost:
     Description: "The logical name of the Redis Master Host"
-      Value: !Ref RedisMasterHost
-      Export:
-        Name: !Join
-          - "-"
-          - - !Ref Environment
-            - !Ref RedisKey
-            - "redis-master-host"
+    Value: !Ref RedisMasterHost
+    Export:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-master-host"
   RedisReplicaHost:
     Description: "The logical name of the Redis Replica Host"
-      Value: !Ref RedisReplicaHost
-      Export:
-        Name: !Join
-          - "-"
-          - - !Ref Environment
-            - !Ref RedisKey
-            - "redis-replica-host"
+    Value: !Ref RedisReplicaHost
+    Export:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-replica-host"
   RedisTls:
     Description: "The logical name of the Redis TLS"
-      Value: !Ref RedisTls
-      Export:
-        Name: !Join
-          - "-"
-          - - !Ref Environment
-            - !Ref RedisKey
-            - "redis-tls"
-  RedisPassword:
-    Description: "The logical name of the Redis Password"
-      Value: !Ref RedisPassword
-      Export:
-        Name: !Join
-          - "-"
-          - - !Ref Environment
-            - !Ref RedisKey
-            - "redis-password"
+    Value: !Ref RedisTls
+    Export:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-tls"
   RedisPort:
     Description: "The logical name of the Redis Port"
-      Value: !Ref RedisPort
-      Export:
-        Name: !Join
-          - "-"
-          - - !Ref Environment
-            - !Ref RedisKey
-            - "redis-port"
+    Value: !Ref RedisPort
+    Export:
+      Name: !Join
+        - "-"
+        - - !Ref Environment
+          - !Ref RedisKey
+          - "redis-port"
