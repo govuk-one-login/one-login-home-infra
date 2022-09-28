@@ -129,16 +129,14 @@ Resources:
                   - "ssm:GetParameter"
                   - "ssm:GetParameters"
                 Resource:
+                    - !Join [ "/",[ "arn:aws:ssm:eu-west-2:301577035144:parameter", Fn::ImportValue: !Sub "${Environment}-account-management-frontend-redis-tls"] ]
+                    - !Join [ "/",[ "arn:aws:ssm:eu-west-2:301577035144:parameter", Fn::ImportValue: !Sub "${Environment}-account-management-frontend-redis-port"] ]
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource:
                   - Fn::ImportValue:
-                      !Sub "${Environment}-account-management-frontend-redis-master-host"
-                  - Fn::ImportValue:
-                      !Sub "${Environment}-account-management-frontend-redis-replica-host"
-                  - Fn::ImportValue:
-                      !Sub "${Environment}-account-management-frontend-redis-tls"
-                  - Fn::ImportValue:
-                      !Sub "${Environment}-account-management-frontend-redis-password"
-                  - Fn::ImportValue:
-                      !Sub "${Environment}-account-management-frontend-redis-port"
+                      "shared-redis-cache-password-secret-arn"
       PermissionsBoundary: !If
         - UsePermissionsBoundary
         - !Ref PermissionsBoundary
@@ -181,7 +179,13 @@ Outputs:
       Name: !Sub "${Environment}-accounts-ecs-cluster"
 
   ExecutionRole:
-    Description: A reference to ECS Cluster Role
+    Description: A reference to ECS Cluster Execution Role
     Value: !GetAtt ExecutionRole.Arn
     Export:
-      Name: !Sub "${Environment}-accounts-ecs-cluster-role"
+      Name: !Sub "${Environment}-accounts-ecs-cluster-execution-role"
+
+  TaskRole:
+    Description: A reference to ECS Cluster Task Role
+    Value: !GetAtt TaskRole.Arn
+    Export:
+      Name: !Sub "${Environment}-accounts-ecs-cluster-task-role"

@@ -262,33 +262,33 @@ Resources:
         - Key: Application
           Value: Shared
 
-  RedisMasterHost:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Join
-        - "-"
-        - - !Ref Environment
-          - !Ref RedisKey
-          - "redis-master-host"
-      Type: "String"
-      Value: Fn::GetAtt CacheReplicationGroup.PrimaryEndPoint.Address
-      Tags:
-        Environment: !Ref Environment
-        Application: "Account Management"
-        
-  RedisReplicaHost:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Name: !Join
-        - "-"
-        - - !Ref Environment
-          - !Ref RedisKey
-          - "redis-replica-host"
-      Type: "String"
-      Value: Fn::GetAtt CacheReplicationGroup.ReaderEndPoint.Address
-      Tags:
-        Environment: !Ref Environment
-        Application: "Account Management"
+#  RedisMasterHost:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !Join
+#        - "-"
+#        - - !Ref Environment
+#          - !Ref RedisKey
+#          - "redis-master-host"
+#      Type: "String"
+#      Value: !GetAtt CacheReplicationGroup.PrimaryEndPoint.Address
+#      Tags:
+#        Environment: !Ref Environment
+#        Application: "Account Management"
+#
+#  RedisReplicaHost:
+#    Type: AWS::SSM::Parameter
+#    Properties:
+#      Name: !Join
+#        - "-"
+#        - - !Ref Environment
+#          - !Ref RedisKey
+#          - "redis-replica-host"
+#      Type: "String"
+#      Value: !GetAtt CacheReplicationGroup.ReaderEndPoint.Address
+#      Tags:
+#        Environment: !Ref Environment
+#        Application: "Account Management"
         
   RedisTls:
     Type: AWS::SSM::Parameter
@@ -334,24 +334,24 @@ Outputs:
     Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
     Export:
       Name: !Sub "${AWS::StackName}-cache-endpoint-port"
-  RedisMasterHost:
-    Description: "The logical name of the Redis Master Host"
-    Value: !Ref RedisMasterHost
-    Export:
-      Name: !Join
-        - "-"
-        - - !Ref Environment
-          - !Ref RedisKey
-          - "redis-master-host"
-  RedisReplicaHost:
-    Description: "The logical name of the Redis Replica Host"
-    Value: !Ref RedisReplicaHost
-    Export:
-      Name: !Join
-        - "-"
-        - - !Ref Environment
-          - !Ref RedisKey
-          - "redis-replica-host"
+#  RedisMasterHost:
+#    Description: "The logical name of the Redis Master Host"
+#    Value: !GetAtt RedisMasterHost.Value
+#    Export:
+#      Name: !Join
+#        - "-"
+#        - - !Ref Environment
+#          - !Ref RedisKey
+#          - "redis-master-host"
+#  RedisReplicaHost:
+#    Description: "The logical name of the Redis Replica Host"
+#    Value: !GetAtt RedisReplicaHost.Value
+#    Export:
+#      Name: !Join
+#        - "-"
+#        - - !Ref Environment
+#          - !Ref RedisKey
+#          - "redis-replica-host"
   RedisTls:
     Description: "The logical name of the Redis TLS"
     Value: !Ref RedisTls
