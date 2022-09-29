@@ -1,0 +1,45 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Creates the necessary components to manage DNS in the Accounts space.
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - build
+      - staging
+      - integration
+      - production
+
+Conditions:
+  IsProduction: !Equals [ !Ref Environment, production]
+
+Resources:
+  PublicHostedZone:
+    Type: AWS::Route53::HostedZone
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: !If
+        - IsProduction
+        - manage.account.gov.uk
+        - !Sub manage.${Environment}.account.gov.uk
+
+  PublicHostedZoneSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The ARN of hosted zone
+      Name: !Sub "/${Environment}/Platform/Route53/PrimaryZoneID"
+      Type: String
+      Value: !GetAtt PublicHostedZone.Id
+
+Outputs:
+  PublicHostedZoneNameServers:
+    Value: !Join
+          - ","
+          - !GetAtt PublicHostedZone.NameServers
+  PublicHostedZoneId:
+    Value: !GetAtt PublicHostedZone.Id
+    Export:
+      Name: PublicHostedZoneId
