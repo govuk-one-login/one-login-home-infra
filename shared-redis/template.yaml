@@ -239,8 +239,7 @@ Resources:
       ReplicationGroupDescription: !Sub Replication group for the ${AWS::StackName} cache
       ReplicationGroupId: !Sub "${AWS::StackName}-cache-cluster"
       SecurityGroupIds:
-        - Fn::ImportValue:
-            !Sub "${VpcStackName}-AWSServicesEndpointSecurityGroupId"
+        - !GetAtt CacheSecurityGroup.GroupId
       TransitEncryptionEnabled: true
       Tags:
         - Key: Product
