@@ -337,3 +337,50 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
         Application: Shared
+
+# LEGACY: these are here to allow app.ts -> getRedisConfig to work
+  LegacyCachePasswordSecretParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The Cache's password
+      Name: !Sub "${Environment}-shared-redis-redis-password"
+      Type: String
+      Value: !Sub '{{resolve:secretsmanager:${CachePasswordSecret}}}'
+      Tags:
+        Product: !Ref ProductTagValue
+        System: Accounts
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: Shared
+
+
+  LegacyCacheEndpointAddressParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The DNS hostname of the cache node
+      Name: !Sub "${Environment}-shared-redis-redis-master-host"
+      Type: String
+      Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Address
+      Tags:
+        Product: !Ref ProductTagValue
+        System: Accounts
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: Shared
+
+  LegacyCacheEndpointPortParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The port number that the cache engine is listening on
+      Name: !Sub "${Environment}-shared-redis-redis-master-port"
+      Type: String
+      Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
+      Tags:
+        Product: !Ref ProductTagValue
+        System: Accounts
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: Shared
