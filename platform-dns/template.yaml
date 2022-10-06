@@ -1,12 +1,13 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >-
-  Creates the necessary components to manage DNS in the Accounts space.
+  All the DNS Hosted Zones in the Accounts space.
 Parameters:
   Environment:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
+      - dev
       - build
       - staging
       - integration
@@ -16,30 +17,32 @@ Conditions:
   IsProduction: !Equals [ !Ref Environment, production]
 
 Resources:
-  PublicHostedZone:
+  SettingsHostedZone:
     Type: AWS::Route53::HostedZone
     DeletionPolicy: Retain
     UpdateReplacePolicy: Retain
     Properties:
       Name: !If
         - IsProduction
-        - manage.account.gov.uk
-        - !Sub manage.${Environment}.account.gov.uk
+        - settings.account.gov.uk
+        - !Sub settings.${Environment}.account.gov.uk
 
-  PublicHostedZoneSSM:
+  SettingsHostedZoneSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The ARN of hosted zone
-      Name: !Sub "/${Environment}/Platform/Route53/PrimaryZoneID"
+      Description: The ARN of hosted zone for the settings domain
+      Name: !Sub "/${AWS::StackName}/Platform/Route53/HostedZone/settings"
       Type: String
-      Value: !GetAtt PublicHostedZone.Id
+      Value: !GetAtt SettingsHostedZone.Id
 
 Outputs:
-  PublicHostedZoneNameServers:
+  SettingsHostedZoneNameServers:
     Value: !Join
           - ","
-          - !GetAtt PublicHostedZone.NameServers
-  PublicHostedZoneId:
-    Value: !GetAtt PublicHostedZone.Id
+          - !GetAtt SettingsHostedZone.NameServers
     Export:
-      Name: PublicHostedZoneId
+      Name: !Sub ${Environment}-settings-domain-HostedZoneNameServers
+  SettingsHostedZoneId:
+    Value: !GetAtt SettingsHostedZone.Id
+    Export:
+      Name: !Sub ${Environment}-settings-domain-HostedZoneId

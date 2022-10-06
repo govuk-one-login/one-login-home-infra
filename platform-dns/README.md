@@ -1,20 +1,53 @@
-# DNS Zones
+# Accounts - DNS Hosted Zones
 
-This is deployed manually once per account to setup DNS by creating a Hosted Zone within the AWS account.
+## Intro
+The CloudFormation template creates a hosted zone for `<subdomain>.accounts.gov.uk` 
+or `<subdomain>.<environment>.accounts.gov.uk` if environment is not `production`.
 
-Once a hosted zone is created, there will be a nameserver record created for the zone. 
-Once deployed, the nameserver record lists the name servers that need to be added to appropriate environment's 
+This Stack is deployed manually once per account/environment 
+as part of the DNS set up process.  
+
+Once the hosted zone(s) is created, there will be a nameserver record created for each zone.
+
+Once deployed, the nameserver record lists the name servers that need to be added to appropriate environment's
 terraform file in the [di-infrastucture](https://github.com/alphagov/di-infrastructure/tree/main/terraform/domain) repo.
 
-To deploy the template to the appropriate AWS account, 
-replace `<environment>` with `build`, `staging`, `integration`, `production`:
+N.B. the hosted zone(s) created by this template are retained even when the Stack is deleted.
+
+### Domains
+The template creates a Hosted Zone for the following subdomain(s):
+ - `settings`
+
+## Deployment
+To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
+
+Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in either of the commands below.
+
+### Creating a New Stack
 ```bash
 gds-cli aws di-account-<environment>-admin \
-aws cloudformation create-stack --stack-name dns-zones --template-body file:///<a-local-path>/di-accounts-infra/platform-dns/template.yaml \
+aws cloudformation create-stack --stack-name dns-zones-<environment> \
+--template-body file://$(pwd)/platform-dns/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
 --parameters ParameterKey=Environment,ParameterValue="<environment>" \
 --tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Account" \
 Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digital.cabinet-office.gov.uk"
 ```
 
+### Updating the Stack
+```bash
+gds-cli aws di-account-<environment>-admin \
+aws cloudformation update-stack --stack-name dns-zones-<environment> \
+--template-body file://$(pwd)/di-accounts-infra/platform-dns/template.yaml \
+--region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
+--parameters ParameterKey=Environment,ParameterValue="<environment>" \
+--tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Account" \
+Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digital.cabinet-office.gov.uk"
+```
 
+### Stack Outputs
+| Type          | Name                                                            | Description                         |
+|---------------|-----------------------------------------------------------------|-------------------------------------|
+| Stack Export  | `<environment>-settings-domain-HostedZoneNameServers`           | Comma separated list of Nameservers |
+| Stack Export  | `<environment>-settings-domain-HostedZoneId`                    | Id of the Route 53 Hosted Zone      |
+| SSM Parameter | `/dns-zones-<environment>/Platform/Route53/HostedZone/settings` | Id of the Route 53 Hosted Zone      |
