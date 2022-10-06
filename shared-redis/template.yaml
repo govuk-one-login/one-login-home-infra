@@ -19,7 +19,8 @@ Parameters:
       The name of the stack that defines the VPC where this redis cluster will be
       deployed.
     Type: String
-    Default: "vpc"
+#    Default: "vpc"
+    Default: "vpc-enhanced"
 
   CacheNodeType:
     Description: 'The type of node used in the node group (shard).'
@@ -70,7 +71,7 @@ Resources:
   KmsKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub KMS key used to protect cache and logging data created in ${AWS::StackName}
+      Description: !Sub "KMS key used to protect cache and logging data created in ${AWS::StackName}"
       Enabled: true
       EnableKeyRotation: true
       KeyPolicy:
@@ -239,7 +240,7 @@ Resources:
       ReplicationGroupDescription: !Sub Replication group for the ${AWS::StackName} cache
       ReplicationGroupId: !Sub "${AWS::StackName}-cache-cluster"
       SecurityGroupIds:
-        - !GetAtt CacheSecurityGroup.GroupId
+        - !GetAtt RedisCacheSecurityGroup.GroupId
       TransitEncryptionEnabled: true
       Tags:
         - Key: Product
@@ -257,25 +258,14 @@ Resources:
         - Key: Application
           Value: Shared
 
-  CacheSecurityGroup:
+  RedisCacheSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${AWS::StackName}-cache-sg
-      GroupDescription: Security group to allow access to the Cache cluster from private subnets only
+      GroupName: !Sub ${AWS::StackName}-ingress-cache-sg
+      GroupDescription: Security group to allow ingress access to the Cache cluster from private subnets only
       VpcId:
         Fn::ImportValue:
           !Sub "${VpcStackName}-VpcId"
-      SecurityGroupIngress:
-        - Description: Allow traffic from Private Subnet A
-          CidrIp: "10.0.10.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
-          IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
-        - Description: Allow traffic from Private Subnet B
-          CidrIp: "10.0.12.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
-          IpProtocol: tcp
-          FromPort: 6379
-          ToPort: 6379
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -284,13 +274,53 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-sg"
+          Value: !Sub "${AWS::StackName}-ingress-cache-sg"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
+
+  IngressRedisFromPrivateSubnetA:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow traffic from Private Subnet A
+      CidrIp: "10.0.10.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      FromPort: 6379
+      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      IpProtocol: tcp
+      ToPort: 6379
+
+  IngressRedisFromPrivateSubnetB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow traffic from Private Subnet B
+      CidrIp: "10.0.12.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      FromPort: 6379
+      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      IpProtocol: tcp
+      ToPort: 6379
+
+  IngressRedisFromProtectedSubnetA:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow traffic from Protected Subnet A
+      CidrIp: "10.0.4.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      FromPort: 6379
+      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      IpProtocol: tcp
+      ToPort: 6379
+
+  IngressRedisFromProtectedSubnetB:
+    Type: AWS::EC2::SecurityGroupIngress
+    Properties:
+      Description: Allow traffic from Private Subnet B
+      CidrIp: "10.0.6.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      FromPort: 6379
+      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      IpProtocol: tcp
+      ToPort: 6379
 
   CachePasswordSecretParameter:
     Type: AWS::SSM::Parameter
