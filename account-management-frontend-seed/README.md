@@ -2,7 +2,7 @@
 
 ## Intro
 The CloudFormation template creates the prerequisite resources and placeholders used by 
-the Authentication Account Management (AAM) webapp.
+the Authentication Account Management (AAM) webapp, which haa default stack name of `account-management-frontend`.
 
 This Stack is deployed manually once per account/environment as part of the AAM prerequisite set up process.
 
