@@ -15,17 +15,9 @@ Parameters:
       - "production"
 
   VpcStackName:
-    Description: >
-      The name of the stack that defines the VPC where this redis cluster will be
-      deployed.
+    Description: "The name of the stack that defines the VPC where this Redis cluster will be deployed"
     Type: String
-#    Default: "vpc"
     Default: "vpc-enhanced"
-
-  CacheNodeType:
-    Description: 'The type of node used in the node group (shard).'
-    Type: 'String'
-    Default: 'cache.t3.micro'
 
   ProductTagValue:
     Description: Value for the Product Tag
@@ -35,23 +27,21 @@ Parameters:
   OwnerTagValue:
     Description: Value for the Owner Tag
     Type: String
-    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+    Default: "govuk-accounts-tech@digital.cabinet-office.gov.uk"
 
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
-    Default: alphagov/di-accounts-infra/shared-redis/template.yaml
+    Default: "alphagov/di-accounts-infra/shared-redis/template.yaml"
 
   CodeSigningConfigArn:
     Type: String
-    Description: >
-      The ARN of the Code Signing Config to use, provided by the deployment pipeline
+    Description: "The ARN of the Code Signing Config to use, provided by the deployment pipeline"
     Default: "none"
 
   PermissionsBoundary:
     Type: String
-    Description: >
-      The ARN of the permissions boundary to apply to any role created by the template
+    Description: "The ARN of the permissions boundary to apply to any role created by the template"
     Default: "none"
 
 Conditions:
@@ -68,10 +58,10 @@ Conditions:
           - "none"
 
 Resources:
-  KmsKey:
+  CacheLoggingKmsKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: !Sub "KMS key used to protect cache and logging data created in ${AWS::StackName}"
+      Description: !Sub "KMS key used to protect logging data created in ${AWS::StackName}"
       Enabled: true
       EnableKeyRotation: true
       KeyPolicy:
@@ -95,7 +85,8 @@ Resources:
             Resource: "*"
             Condition:
               ArnLike:
-                "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+                "kms:EncryptionContext:aws:logs:arn":
+                  !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:/elasticache/shared-redis/cluster"
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -104,7 +95,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-kms-key"
+          Value: !Sub "${AWS::StackName}-CacheLoggingKmsKey"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -112,10 +103,16 @@ Resources:
         - Key: Application
           Value: Shared
 
+  CacheLoggingKmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-CacheLoggingKmsKey"
+      TargetKeyId: !GetAtt CacheLoggingKmsKey.Arn
+
   CacheLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      KmsKeyId: !GetAtt KmsKey.Arn
+      KmsKeyId: !GetAtt CacheLoggingKmsKey.Arn
       LogGroupName: !Sub "/elasticache/${AWS::StackName}/cluster"
       RetentionInDays: 3
       Tags:
@@ -126,7 +123,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-logs"
+          Value: !Sub "${AWS::StackName}-CacheLogGroup"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -134,10 +131,57 @@ Resources:
         - Key: Application
           Value: Shared
 
+  SecretsKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: !Sub "KMS key used to protect secrets data created in ${AWS::StackName}"
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: !Sub "secretsmanager.${AWS::Region}.amazonaws.com"
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource: "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/Config/Cache/Password*"
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: Accounts
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-SecretsKmsKey"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+        - Key: Application
+          Value: Shared
+
+  SecretsKmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-SecretsKmsKey"
+      TargetKeyId: !GetAtt SecretsKmsKey.Arn
+
   CachePasswordSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub ${AWS::StackName}-cache-password
+      Name: !Sub "/${AWS::StackName}/Config/Cache/Password"
       Description: !Sub Random password for the ${AWS::StackName} cache
       GenerateSecretString:
         ExcludeLowercase: false
@@ -147,7 +191,7 @@ Resources:
         IncludeSpace: false
         RequireEachIncludedType: true
         PasswordLength: 32
-      KmsKeyId: !GetAtt KmsKey.Arn
+      KmsKeyId: !GetAtt SecretsKmsKey.Arn
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -156,7 +200,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-password"
+          Value: !Sub "/${AWS::StackName}/Config/Cache/Password"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -167,8 +211,8 @@ Resources:
   CacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
-      CacheSubnetGroupName: !Sub ${AWS::StackName}-cache-subnet-group
-      Description: !Sub Subnet Group for the ${AWS::StackName} cache
+      CacheSubnetGroupName: !Sub ${AWS::StackName}-CacheSubnetGroup
+      Description: !Sub "Subnet Group for the ${AWS::StackName} cache"
       SubnetIds:
         - Fn::ImportValue:
             !Sub "${VpcStackName}-PrivateSubnetIdA"
@@ -182,7 +226,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-subnet-group"
+          Value: !Sub "${AWS::StackName}-CacheSubnetGroup"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -194,7 +238,7 @@ Resources:
     Type: AWS::ElastiCache::ParameterGroup
     Properties:
       CacheParameterGroupFamily: redis6.x
-      Description: !Sub ${AWS::StackName} cache settings
+      Description: !Sub ${AWS::StackName} cache parameter group
       Properties:
         cluster-enabled: "yes"
       Tags:
@@ -205,7 +249,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub ${AWS::StackName}-cache-parameter-group
+          Value: !Sub ${AWS::StackName}-CacheParameterGroup
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -219,7 +263,7 @@ Resources:
       AtRestEncryptionEnabled: true
       AuthToken: !Sub '{{resolve:secretsmanager:${CachePasswordSecret}}}'
       AutomaticFailoverEnabled: true
-      CacheNodeType: !Ref CacheNodeType
+      CacheNodeType: "cache.t3.micro"
       CacheParameterGroupName: !Ref CacheParameterGroup
       CacheSubnetGroupName: !Ref CacheSubnetGroup
       Engine: redis
@@ -232,15 +276,15 @@ Resources:
           LogFormat: json
           LogType: engine-log
       MultiAZEnabled: true
-      #      NotificationTopicArn:  TODO
+      #      NotificationTopicArn:  TODO Create SNS topic and reference
       NumNodeGroups: 1
       PreferredMaintenanceWindow: "mon:02:00-mon:03:00"
       Port: 6379
       ReplicasPerNodeGroup: 1
       ReplicationGroupDescription: !Sub Replication group for the ${AWS::StackName} cache
-      ReplicationGroupId: !Sub "${AWS::StackName}-cache-cluster"
+      ReplicationGroupId: !Sub "${AWS::StackName}-CacheCluster"
       SecurityGroupIds:
-        - !GetAtt RedisCacheSecurityGroup.GroupId
+        - !GetAtt CacheSecurityGroup.GroupId
       TransitEncryptionEnabled: true
       Tags:
         - Key: Product
@@ -250,7 +294,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-cache-replication-group"
+          Value: !Sub "${AWS::StackName}-CacheReplicationGroup"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -258,11 +302,11 @@ Resources:
         - Key: Application
           Value: Shared
 
-  RedisCacheSecurityGroup:
+  CacheSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
-      GroupName: !Sub ${AWS::StackName}-ingress-cache-sg
-      GroupDescription: Security group to allow ingress access to the Cache cluster from private subnets only
+      GroupName: !Sub "${AWS::StackName}-CacheSecurityGroup"
+      GroupDescription: !Sub "${AWS::StackName} security group to allow ingress access to the Cache cluster from private and protected subnets"
       VpcId:
         Fn::ImportValue:
           !Sub "${VpcStackName}-VpcId"
@@ -274,7 +318,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "${AWS::StackName}-ingress-cache-sg"
+          Value: !Sub "${AWS::StackName}-CacheSecurityGroup"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -286,9 +330,9 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: Allow traffic from Private Subnet A
-      CidrIp: "10.0.10.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      CidrIp: "10.0.10.0/23"
       FromPort: 6379
-      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      GroupId: !GetAtt CacheSecurityGroup.GroupId
       IpProtocol: tcp
       ToPort: 6379
 
@@ -296,9 +340,9 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: Allow traffic from Private Subnet B
-      CidrIp: "10.0.12.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      CidrIp: "10.0.12.0/23"
       FromPort: 6379
-      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      GroupId: !GetAtt CacheSecurityGroup.GroupId
       IpProtocol: tcp
       ToPort: 6379
 
@@ -306,9 +350,9 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: Allow traffic from Protected Subnet A
-      CidrIp: "10.0.4.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      CidrIp: "10.0.4.0/23"
       FromPort: 6379
-      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      GroupId: !GetAtt CacheSecurityGroup.GroupId
       IpProtocol: tcp
       ToPort: 6379
 
@@ -316,9 +360,9 @@ Resources:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
       Description: Allow traffic from Private Subnet B
-      CidrIp: "10.0.6.0/23" # TODO - get CIDR groups using Cidr func with same properties for subnet using published the VPC cidr as seed
+      CidrIp: "10.0.6.0/23"
       FromPort: 6379
-      GroupId: !GetAtt RedisCacheSecurityGroup.GroupId
+      GroupId: !GetAtt CacheSecurityGroup.GroupId
       IpProtocol: tcp
       ToPort: 6379
 
@@ -326,7 +370,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The ARN of the Cache's password secret
-      Name: !Sub "/${Environment}/${AWS::StackName}/Cluster/Secret/ARN"
+      Name: !Sub "/${AWS::StackName}/Cluster/Secret/ARN"
       Type: String
       Value: !Ref CachePasswordSecret
       Tags:
@@ -337,12 +381,11 @@ Resources:
         Source: !Ref SourceTagValue
         Application: Shared
 
-
   CacheEndpointAddressParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The DNS hostname of the cache node
-      Name: !Sub "/${Environment}/${AWS::StackName}/Cluster/Endpoint/Address"
+      Name: !Sub "/${AWS::StackName}/Cluster/Endpoint/Address"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Address
       Tags:
@@ -357,7 +400,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The port number that the cache engine is listening on
-      Name: !Sub "/${Environment}/${AWS::StackName}/Cluster/Endpoint/Port"
+      Name: !Sub "/${AWS::StackName}/Cluster/Endpoint/Port"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
       Tags:
@@ -373,7 +416,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The Cache's password
-      Name: !Sub "${Environment}-shared-redis-redis-password"
+      Name: !Sub "${Environment}-${AWS::StackName}-redis-password"
       Type: String
       Value: !Sub '{{resolve:secretsmanager:${CachePasswordSecret}}}'
       Tags:
@@ -389,7 +432,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The DNS hostname of the cache node
-      Name: !Sub "${Environment}-shared-redis-redis-master-host"
+      Name: !Sub "${Environment}-${AWS::StackName}-redis-master-host"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Address
       Tags:
@@ -404,7 +447,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The port number that the cache engine is listening on
-      Name: !Sub "${Environment}-shared-redis-redis-master-port"
+      Name: !Sub "${Environment}-${AWS::StackName}-redis-master-port"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
       Tags:
