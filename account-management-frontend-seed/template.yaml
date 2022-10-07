@@ -55,7 +55,7 @@ Parameters:
     Type: String
     Description: >
       The ARN of the permissions boundary to apply to any role created by the template
-    Default: "none"
+    Default: none
 
 Conditions:
   UsePermissionsBoundary:
