@@ -1,0 +1,260 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  Sets up prerequisite resources and placeholders used by the Authentication Account Management (AAM) webapp. 
+  The KMS key's Public key is the AAM webapp server's Client Secret.
+  The KMS key used for signing JWTs so that OP can authenticate the RP (runtime dependency).
+  The stack also create SSM Parameters and Secrets placeholder resources.  
+  These placeholder resources are for storing config values used when the account-management-frontend Cfn stack is 
+  deployed (deploy-time dependencies).
+
+Parameters:
+  Environment:
+    Description: "The name of the environment to deploy to"
+    Type: "String"
+    Default: build
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+
+  AAMStackName:
+    Description: "The intended name of the AAM SAM Stack"
+    Type: "String"
+    Default: account-management-frontend
+
+  ApplicationName:
+    Description: The Application that is being supported by this stack
+    Type: String
+    Default: Authentication Account Management
+
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: "GOV.UK Sign In"
+
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Accounts
+
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/account-management-frontend-seed/template.yaml
+
+  # TODO enforce
+  PermissionsBoundary:
+    Type: String
+    Description: >
+      The ARN of the permissions boundary to apply to any role created by the template
+    Default: none
+
+Conditions:
+  UsePermissionsBoundary:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref PermissionsBoundary
+          - "none"
+
+Resources:
+  JwtSigningKey:
+    Type: AWS::KMS::Key
+    #checkov:skip=CKV_AWS_7:Ensure rotation for customer created CMKs is enabled
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Description: The KMS key used for JWT Signing Key in RP to OP Authentication
+      Enabled: true
+      EnableKeyRotation: false
+      KeySpec: RSA_2048
+      KeyUsage: SIGN_VERIFY
+      MultiRegion: false
+      PendingWindowInDays: 30
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+        - Effect: Allow
+          Principal:
+            AWS: !Sub 'arn:aws:iam::${AWS::AccountId}:root' # TODO also allow Account's KMS management role/group to do so
+          Action:
+            - 'kms:Create*'
+            - 'kms:Describe*'
+            - 'kms:Enable*'
+            - 'kms:List*'
+            - 'kms:Put*'
+            - 'kms:Update*'
+            - 'kms:Revoke*'
+            - 'kms:Disable*'
+            - 'kms:Get*'
+            - 'kms:Delete*'
+            - 'kms:ScheduleKeyDeletion'
+            - 'kms:CancelKeyDeletion'
+          Resource:
+            - "*"
+        - Effect: Allow
+          Principal:
+            AWS: !Sub '${AWS::AccountId}'
+          Action:
+            - 'kms:Sign'
+            - 'kms:GetPublicKey'
+          Resource:
+            - "*"
+          Condition:
+            StringLike:
+              aws:PrincipalArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AAMStackName}-TaskRole'
+
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AAMStackName}-JwtSigningKey"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+        - Key: Application
+          Value: !Ref ApplicationName
+        - Key: CheckovRulesToSkip
+          Value: CKV_AWS_7
+
+  JwtSigningKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AAMStackName}-JwtSigningKey"
+      TargetKeyId: !Ref JwtSigningKey
+
+# KMS Key Info in SSM
+  JwtSigningKeyIdSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The Key Id of the KMS key used for JWT Signing Key in RP to OP Authentication
+      Name: !Sub "/${AAMStackName}/KMS/JwtSigningKey/Id"
+      Type: String
+      Value: !Ref JwtSigningKey
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: !Ref ApplicationName
+
+  JwtSigningKeyAliasSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The Alias of the KMS key used for JWT Signing Key in RP to OP Authentication
+      Name: !Sub "/${AAMStackName}/KMS/JwtSigningKey/Alias"
+      Type: String
+      Value: !Ref JwtSigningKeyAlias
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: !Ref ApplicationName
+
+# Application Config Placeholders - to be updated MANUALLY with config values before deploying the App stack
+  OPClientIdAppConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The Client ID issued by the OP for the AAM webapp server to be a RP
+      Name: !Sub "/${AAMStackName}/Config/OIDC/Client/Id"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: !Ref ApplicationName
+
+  GTMIdAppConfig:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The Google Tag Manager ID # TODO confirm this is what GTM means
+      Name: !Sub "/${AAMStackName}/Config/GTM/Id"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+        Application: !Ref ApplicationName
+
+  SecretsEncryptionKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: >
+        !Sub KMS key used to protect secret configuration values for ${AAMStackName}.
+        Required by roles who need to update config values and deploy the stack called ${AAMStackName}.
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub '${AWS::AccountId}'
+            Action:
+              - "kms:*"
+            Resource:
+              - "*"
+
+  SecretsEncryptionKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AAMStackName}-SecretsEncryptionKMSKey"
+      TargetKeyId: !Ref SecretsEncryptionKMSKey
+
+  PublishingApiKey:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/${AAMStackName}/Config/Publishing/API/Key"
+      Description: "GOV.UK Services - Publishing API Key"
+      SecretString: "please-set-me"
+      KmsKeyId: !Ref SecretsEncryptionKMSKeyAlias
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-PublishingApiKey"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+        - Key: Application
+          Value: !Ref ApplicationName
+
+Outputs:
+
+  JwtSigningKeyId:
+    Description: "The Key Id of the KMS key used for JWT Signing Key in RP to OP Authentication"
+    Value: !Ref JwtSigningKey
+    Export:
+      Name: !Sub "${AWS::StackName}-JwtSigningKeyId"
+
+  JwtSigningKeyAlias:
+    Description: "The Alias of the KMS key used for JWT Signing Key in RP to OP Authentication"
+    Value: !Ref JwtSigningKeyAlias
+    Export:
+      Name: !Sub "${AWS::StackName}-JwtSigningKeyAlias"
