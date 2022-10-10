@@ -1,0 +1,57 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  Creates the necessary components to manage DNS in Accounts.
+
+Mappings:
+  SettingsPlatformConfiguration:
+    dev:
+      DNSSUFFIX: settings.build.account.gov.uk
+    build:
+      DNSSUFFIX: settings.build.account.gov.uk
+    staging:
+      DNSSUFFIX: settings.staging.account.gov.uk
+    integration:
+      DNSSUFFIX: settings.integration.account.gov.uk
+    production:
+      DNSSUFFIX: settings.account.gov.uk
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - build
+      - staging
+      - integration
+      - production
+
+Resources:
+  SettingsExternalCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub
+        - "${DNSSUFFIX}"
+        - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+
+      SubjectAlternativeNames:
+        - !Sub
+          - "*.${DNSSUFFIX}"
+          - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+
+      DomainValidationOptions:
+        - DomainName: !Sub
+            - "${DNSSUFFIX}"
+            - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+          HostedZoneId: !ImportValue SettingsHostedZoneId
+      ValidationMethod: DNS
+
+  SettingsCertificateARNSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The Certificate ARN
+      Name: !Sub "/${Environment}/Platform/ACM/HostedZone/Certificate/Settings/ARN"
+      Type: String
+      Value: !Ref   SettingsExternalCertificate
+      Tags:
+        VPC: !Sub ${AWS::StackName}
