@@ -155,7 +155,7 @@ Resources:
               - "kms:ReEncrypt*"
               - "kms:GenerateDataKey*"
               - "kms:Describe*"
-            Resource: "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/Config/Cache/Password*"
+            Resource: "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/${AWS::StackName}/Config/Cache/Password*"
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
