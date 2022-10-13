@@ -1,6 +1,6 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
-Description: A clustered Redis cache.
+Description: ElastiCache Redis cache with Cluster Mode Enabled.
 
 Parameters:
   Environment:
@@ -58,6 +58,8 @@ Conditions:
           - "none"
 
 Resources:
+
+  # Cache Logging
   CacheLoggingKmsKey:
     Type: AWS::KMS::Key
     Properties:
@@ -131,6 +133,7 @@ Resources:
         - Key: Application
           Value: Shared
 
+  # Cache Secret
   SecretsKmsKey:
     Type: AWS::KMS::Key
     Properties:
@@ -181,7 +184,7 @@ Resources:
   CachePasswordSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/${AWS::StackName}/Config/Cache/Password"
+      Name: !Sub "/${AWS::StackName}/Cluster/Password"
       Description: !Sub Random password for the ${AWS::StackName} cache
       GenerateSecretString:
         ExcludeLowercase: false
@@ -200,7 +203,7 @@ Resources:
         - Key: Environment
           Value: !Ref Environment
         - Key: Name
-          Value: !Sub "/${AWS::StackName}/Config/Cache/Password"
+          Value: !Sub "/${AWS::StackName}/Cluster/Password"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
@@ -208,6 +211,7 @@ Resources:
         - Key: Application
           Value: Shared
 
+  # Cache & Cache Config
   CacheSubnetGroup:
     Type: AWS::ElastiCache::SubnetGroup
     Properties:
@@ -301,7 +305,9 @@ Resources:
           Value: !Ref SourceTagValue
         - Key: Application
           Value: Shared
+    DependsOn: CachePasswordSecret
 
+  # Cache Security Group Ingress Protection
   CacheSecurityGroup:
     Type: AWS::EC2::SecurityGroup
     Properties:
@@ -359,18 +365,19 @@ Resources:
   IngressRedisFromProtectedSubnetB:
     Type: AWS::EC2::SecurityGroupIngress
     Properties:
-      Description: Allow traffic from Private Subnet B
+      Description: Allow traffic from Protected Subnet B
       CidrIp: "10.0.6.0/23"
       FromPort: 6379
       GroupId: !GetAtt CacheSecurityGroup.GroupId
       IpProtocol: tcp
       ToPort: 6379
 
+  # Stack State in SSM Parameters
   CachePasswordSecretParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The ARN of the Cache's password secret
-      Name: !Sub "/${AWS::StackName}/Cluster/Secret/ARN"
+      Name: !Sub "/${AWS::StackName}/Cluster/Password/Secret"
       Type: String
       Value: !Ref CachePasswordSecret
       Tags:
@@ -384,7 +391,7 @@ Resources:
   CacheEndpointAddressParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The DNS hostname of the cache node
+      Description: The DNS hostname of the cache master node
       Name: !Sub "/${AWS::StackName}/Cluster/Endpoint/Address"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Address
@@ -411,11 +418,11 @@ Resources:
         Source: !Ref SourceTagValue
         Application: Shared
 
-# LEGACY: these are here to allow app.ts -> getRedisConfig to work
+  # LEGACY: these are here to allow app.ts -> getRedisConfig to work
   LegacyCachePasswordSecretParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The Cache's password
+      Description: !Sub Random password for the ${AWS::StackName} cache
       Name: !Sub "${Environment}-${AWS::StackName}-redis-password"
       Type: String
       Value: !Sub '{{resolve:secretsmanager:${CachePasswordSecret}}}'
@@ -427,11 +434,10 @@ Resources:
         Source: !Ref SourceTagValue
         Application: Shared
 
-
   LegacyCacheEndpointAddressParameter:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The DNS hostname of the cache node
+      Description: The DNS hostname of the master cache node
       Name: !Sub "${Environment}-${AWS::StackName}-redis-master-host"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Address
@@ -447,7 +453,7 @@ Resources:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The port number that the cache engine is listening on
-      Name: !Sub "${Environment}-${AWS::StackName}-redis-master-port"
+      Name: !Sub "${Environment}-${AWS::StackName}-redis-port"
       Type: String
       Value: !GetAtt CacheReplicationGroup.ConfigurationEndPoint.Port
       Tags:
