@@ -11,7 +11,7 @@ Accessible from VPC networked resources within the Protected and Private subnets
 This Stack is deployed manually once per account/environment as part of the AAM prerequisite set up process.
 
 ### Redis Node selection & Choices
- - `NodeCount` - number of cache clusters, between `1 - 6`, defaults is `2` based one one node per AZ
+ - `NodeCount` - number of cache clusters, between `2 - 6`, defaults is `2` based one node per AZ
 
 ## Deployment
 To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
@@ -19,7 +19,7 @@ To deploy the template to the appropriate AWS account, ensure you are at the roo
 ### Creating a New Stack
 Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in the commands below.
 ```bash
-gds-cli aws di-account-build-admin \                                              INT ✘  2.7.6   19:53:14  
+gds-cli aws di-account-build-admin \
 aws cloudformation create-stack --stack-name shared-redis \
 --template-body file://$(pwd)/shared-redis/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
@@ -31,7 +31,7 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ### Updating an Existing Stack
 Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in the commands below.
 ```bash
-gds-cli aws di-account-build-admin \                                              INT ✘  2.7.6   19:53:14  
+gds-cli aws di-account-build-admin \ 
 aws cloudformation update-stack --stack-name shared-redis \
 --template-body file://$(pwd)/shared-redis/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
