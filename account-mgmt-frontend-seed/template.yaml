@@ -5,7 +5,7 @@ Description: >
   The KMS key's Public key is the AAM webapp server's Client Secret.
   The KMS key used for signing JWTs so that OP can authenticate the RP (runtime dependency).
   The stack also create SSM Parameters and Secrets placeholder resources.  
-  These placeholder resources are for storing config values used when the account-management-frontend Cfn stack is 
+  These placeholder resources are for storing config values used when the account-mgmt-frontend Cfn stack is 
   deployed (deploy-time dependencies).
 
 Parameters:
@@ -23,12 +23,12 @@ Parameters:
   AAMStackName:
     Description: "The intended name of the AAM SAM Stack"
     Type: "String"
-    Default: account-management-frontend
+    Default: account-mgmt-frontend
 
   ApplicationName:
     Description: The Application that is being supported by this stack
     Type: String
-    Default: Authentication Account Management
+    Default: Account Management Frontend
 
   ProductTagValue:
     Description: Value for the Product Tag
@@ -38,7 +38,7 @@ Parameters:
   SystemTagValue:
     Description: Value for the System Tag
     Type: String
-    Default: Accounts
+    Default: Account Management
 
   OwnerTagValue:
     Description: Value for the Owner Tag
@@ -48,7 +48,7 @@ Parameters:
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
-    Default: alphagov/di-accounts-infra/account-management-frontend-seed/template.yaml
+    Default: alphagov/di-accounts-infra/account-mgmt-frontend-seed/template.yaml
 
   # TODO enforce
   PermissionsBoundary:
