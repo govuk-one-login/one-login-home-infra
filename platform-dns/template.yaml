@@ -7,7 +7,6 @@ Parameters:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
-      - dev
       - build
       - staging
       - integration
@@ -30,8 +29,8 @@ Resources:
   SettingsHostedZoneSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The ARN of hosted zone for the settings domain
-      Name: !Sub "/${AWS::StackName}/Platform/Route53/HostedZone/settings"
+      Description: The ID of hosted zone for the settings domain
+      Name: !Sub "/${Environment}/Platform/Route53/HostedZone/Settings"
       Type: String
       Value: !GetAtt SettingsHostedZone.Id
 
@@ -41,8 +40,8 @@ Outputs:
           - ","
           - !GetAtt SettingsHostedZone.NameServers
     Export:
-      Name: !Sub ${Environment}-settings-domain-HostedZoneNameServers
+      Name: SettingsHostedZoneNameServers
   SettingsHostedZoneId:
     Value: !GetAtt SettingsHostedZone.Id
     Export:
-      Name: !Sub ${Environment}-settings-domain-HostedZoneId
+      Name: SettingsHostedZoneId

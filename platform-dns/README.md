@@ -21,7 +21,7 @@ The template creates a Hosted Zone for the following subdomain(s):
 ## Deployment
 To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
 
-Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in either of the commands below.
+Replace `<environment>` with `build`, `staging`, `integration`, `production` in either of the commands below.
 
 ### Creating a New Stack
 ```bash
@@ -38,7 +38,7 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ```bash
 gds-cli aws di-account-<environment>-admin \
 aws cloudformation update-stack --stack-name dns-zones-<environment> \
---template-body file://$(pwd)/di-accounts-infra/platform-dns/template.yaml \
+--template-body file://$(pwd)/platform-dns/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
 --parameters ParameterKey=Environment,ParameterValue="<environment>" \
 --tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Account" \
@@ -46,8 +46,8 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ```
 
 ### Stack Outputs
-| Type          | Name                                                            | Description                         |
-|---------------|-----------------------------------------------------------------|-------------------------------------|
-| Stack Export  | `<environment>-settings-domain-HostedZoneNameServers`           | Comma separated list of Nameservers |
-| Stack Export  | `<environment>-settings-domain-HostedZoneId`                    | Id of the Route 53 Hosted Zone      |
-| SSM Parameter | `/dns-zones-<environment>/Platform/Route53/HostedZone/settings` | Id of the Route 53 Hosted Zone      |
+| Type          | Name                                                    | Description                         |
+|---------------|---------------------------------------------------------|-------------------------------------|
+| Stack Export  | `SettingsHostedZoneNameServers`                         | Comma separated list of Nameservers |
+| Stack Export  | `SettingsHostedZoneId`                                  | Id of the Route 53 Hosted Zone      |
+| SSM Parameter | `/<environment>/Platform/Route53/HostedZone/Settings`   | Id of the Route 53 Hosted Zone      |
