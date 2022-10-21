@@ -1,4 +1,4 @@
-# Accounts - Authentication Account Management (AAM) - Seed Stack
+# Accounts - Platform Common
 
 ## Intro
 Externalises values referenced across multiple CloudFormation Stacks.
