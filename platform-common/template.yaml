@@ -1,0 +1,61 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  Externalises values referenced across multiple CloudFormation Stacks.
+  This prevents having to individually update each reference of a single value across multiple Stacks.
+  Values will instead resolve as SSM parameters or Secrets acting as the single source of truth.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK Sign In
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Management
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/platform-common/template.yaml
+
+Conditions:
+  IsNotDevelopment: !Or
+    - !Equals [ !Ref Environment, build ]
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
+
+Resources:
+  #
+  # SSM Parameter
+  #
+
+  CSLSLogsSubscriptionARN:
+    Type: AWS::SSM::Parameter
+    Condition: IsNotDevelopment
+    Properties:
+      Description: The CSLS CloudWatch Logs Destination ARN
+      Name: !Sub "/${Environment}/Platform/Logs/Subscription/CSLS"
+      Type: String
+      Value: "arn:aws:logs:${AWS::Region}:885513274347:destination:csls_cw_logs_destination_prodpython"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: Accounts
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
