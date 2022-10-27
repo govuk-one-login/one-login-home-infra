@@ -16,6 +16,24 @@ Conditions:
   IsProduction: !Equals [ !Ref Environment, production]
 
 Resources:
+  HomeHostedZone:
+    Type: AWS::Route53::HostedZone
+    DeletionPolicy: Retain
+    UpdateReplacePolicy: Retain
+    Properties:
+      Name: !If
+        - IsProduction
+        - home.account.gov.uk
+        - !Sub home.${Environment}.account.gov.uk
+
+  HomeHostedZoneSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The ID of hosted zone for the home domain
+      Name: !Sub "/${Environment}/Platform/Route53/HostedZone/Home"
+      Type: String
+      Value: !GetAtt HomeHostedZone.Id
+
   SettingsHostedZone:
     Type: AWS::Route53::HostedZone
     DeletionPolicy: Retain
@@ -35,10 +53,20 @@ Resources:
       Value: !GetAtt SettingsHostedZone.Id
 
 Outputs:
-  SettingsHostedZoneNameServers:
+  HomeHostedZoneNameServers:
     Value: !Join
           - ","
-          - !GetAtt SettingsHostedZone.NameServers
+          - !GetAtt HomeHostedZone.NameServers
+    Export:
+      Name: HomeHostedZoneNameServers
+  HomeHostedZoneId:
+    Value: !GetAtt HomeHostedZone.Id
+    Export:
+      Name: HomeHostedZoneId
+  SettingsHostedZoneNameServers:
+    Value: !Join
+      - ","
+      - !GetAtt SettingsHostedZone.NameServers
     Export:
       Name: SettingsHostedZoneNameServers
   SettingsHostedZoneId:
