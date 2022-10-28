@@ -47,12 +47,41 @@ Resources:
 
   CSLSLogsSubscriptionARN:
     Type: AWS::SSM::Parameter
-    Condition: IsNotDevelopment
     Properties:
       Description: The CSLS CloudWatch Logs Destination ARN
-      Name: !Sub "/${Environment}/Platform/Logs/Subscription/CSLS"
+      Name: !Sub "/${Environment}/Platform/Logs/Subscription/CSLS/ARN"
       Type: String
-      Value: "arn:aws:logs:${AWS::Region}:885513274347:destination:csls_cw_logs_destination_prodpython"
+      Value: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  GlobalWAFACLARN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: >
+        The Global (us-east-1) Web ACL ARN to be used to protect Account solutions delivered via a CloudFront Distribution
+      Name: !Sub "/${Environment}/Platform/WAF/Global/ACL/ARN"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  GlobalHomeCertARN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: >
+        The Global (us-east-1) ACM Cert used to associate the home subdomain with the CloudFront Distribution
+      Name: !Sub "/${Environment}/Platform/ACM/Global/Certificate/Home/ARN"
+      Type: String
+      Value: "please-set-me"
       Tags:
         Product: !Ref ProductTagValue
         System: !Ref SystemTagValue
@@ -64,10 +93,11 @@ Resources:
   # SecretsManager
   #
 
+  # see https://govukverify.atlassian.net/wiki/spaces/PLAT/pages/3062726680/How+to+prepare+AWS+accounts+for+containing+SAM+deployment+pipelines#Grafana-metrics
   GrafanaApiKey:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/${Environment}/Config/Grafana/API/Key"
+      Name: !Sub "pipeline-grafana-api-key"
       Description: "Accounts - Grafana API Key"
       SecretString: "placeholder-value"
       KmsKeyId: !Ref SecretsEncryptionKMSKeyAlias
@@ -85,16 +115,12 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
-  #
-  # KMS Key
-  #
-
   SecretsEncryptionKMSKey:
     Type: AWS::KMS::Key
     Properties:
       Description: >
-        !Sub KMS key used to protect secret configuration values for ${AWS::StackName}.
-        Required by roles who need to update config values and deploy the stack called ${AWS::StackName}.
+        KMS key used to protect secret configuration values used across the platform.
+        Required by roles who need to update config values.
       Enabled: true
       EnableKeyRotation: true
       KeyPolicy:
@@ -110,15 +136,11 @@ Resources:
             Principal:
               Service: !Sub "secretsmanager.amazonaws.com"
             Action:
-              - "kms:Encrypt*"
-              - "kms:Decrypt*"
-              - "kms:ReEncrypt*"
-              - "kms:GenerateDataKey*"
-              - "kms:Describe*"
+              - "kms:*"
             Resource: "*"
             Condition:
               ArnLike:
-                aws:SourceArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/${Environment}/Config/Grafana/API/Key"
+                aws:SourceArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/pipeline-grafana-api-key"
 
   SecretsEncryptionKMSKeyAlias:
     Type: AWS::KMS::Alias
