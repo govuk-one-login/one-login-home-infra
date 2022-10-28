@@ -1,0 +1,177 @@
+AWSTemplateFormatVersion: "2010-09-09"
+Transform: AWS::Serverless-2016-10-31
+
+Description: Platform Global Resources
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  ValidationDomain:
+    Description: The account.gov.uk validation domain
+    Type: String
+    Default: account.gov.uk
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK Sign In
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Management
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/platform-global-resources/template.yaml
+
+Conditions:
+  IsProduction: !Equals [ !Ref Environment, production ]
+
+Mappings:
+  SettingsPlatformConfiguration:
+    build:
+      DNSSUFFIX: settings.build.account.gov.uk
+    staging:
+      DNSSUFFIX: settings.staging.account.gov.uk
+    integration:
+      DNSSUFFIX: settings.integration.account.gov.uk
+    production:
+      DNSSUFFIX: settings.account.gov.uk
+
+Resources:
+  WebACL:
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub "${AWS::StackName}-WebACL"
+      DefaultAction:
+        Block: {}
+      Scope: CLOUDFRONT
+      Rules:
+        # Optional rule set to restrict to GDS IP addresses.
+        # See WAFv2GDSIPSet resource further on.
+        - Name: GDSIPs
+          Action:
+            Allow: {}
+          Priority: 10
+          Statement:
+            IPSetReferenceStatement:
+              Arn: !GetAtt WAFv2GDSIPSet.Arn
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: TRUE
+            MetricName: !Sub "${AWS::StackName}-WAFGDSIPhits"
+            SampledRequestsEnabled: FALSE
+        - Name: AWS-AWMManagedRuleCommonRuleSet
+          OverrideAction:
+            Count: {}
+          Priority: 20
+          Statement:
+            ManagedRuleGroupStatement:
+              Name: AWSManagedRulesCommonRuleSet
+              VendorName: AWS
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: TRUE
+            MetricName: !Sub "${AWS::StackName}-AWSCRShits"
+            SampledRequestsEnabled: FALSE
+        - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet
+          Priority: 30
+          OverrideAction:
+            None: {}
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: TRUE
+            MetricName: !Sub "${AWS::StackName}-AWSKBIhits"
+            SampledRequestsEnabled: FALSE
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: TRUE
+        MetricName: !Sub "${AWS::StackName}-WAFv2hits"
+        SampledRequestsEnabled: FALSE
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-WAFv2"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  # The IP address blocks below are referenced from here:
+  # https://sites.google.com/a/digital.cabinet-office.gov.uk/gds/working-at-gds/gds-internal-it/gds-internal-it-network-public-ip-addresses
+  WAFv2GDSIPSet:
+    Type: AWS::WAFv2::IPSet
+    Properties:
+      Addresses:
+        - "213.86.153.211/32"
+        - "213.86.153.212/32"
+        - "213.86.153.213/32"
+        - "213.86.153.214/32"
+        - "213.86.153.231/32"
+        - "213.86.153.235/32"
+        - "213.86.153.236/32"
+        - "213.86.153.237/32"
+        - "51.149.8.0/25"
+        - "51.149.8.128/29"
+      IPAddressVersion: IPV4
+      Scope: CLOUDFRONT
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-WAFv2GDSIPSet"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  #
+  # DNS Certificate
+  #
+
+  SettingsExternalCertificate:
+    Type: AWS::CertificateManager::Certificate
+    Properties:
+      DomainName: !Sub
+        - "${DNSSUFFIX}"
+        - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+
+      SubjectAlternativeNames:
+        - !Sub
+          - "*.${DNSSUFFIX}"
+          - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+
+      DomainValidationOptions:
+        - DomainName: !Sub
+            - "${DNSSUFFIX}"
+            - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+          ValidationDomain: !Ref ValidationDomain
+      ValidationMethod: DNS
+
+Outputs:
+  WAFv2WebACLARN:
+    Description: The ARN of the WAFv2 WebACL.
+    Value: !GetAtt WebACL.Arn
+  SettingsCertificateARN:
+    Description: The ARN of the Settings domain certificate.
+    Value: !Ref SettingsExternalCertificate
