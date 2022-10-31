@@ -37,20 +37,30 @@ Parameters:
 
 Conditions:
   IsProduction: !Equals [ !Ref Environment, production ]
+  IsNotProduction: !Or
+    - !Equals [ !Ref Environment, dev ]
+    - !Equals [ !Ref Environment, build ]
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
 
 Mappings:
-  SettingsPlatformConfiguration:
+  HomePlatformConfiguration:
     build:
-      DNSSUFFIX: settings.build.account.gov.uk
+      DNSSUFFIX: home.build.account.gov.uk
     staging:
-      DNSSUFFIX: settings.staging.account.gov.uk
+      DNSSUFFIX: home.staging.account.gov.uk
     integration:
-      DNSSUFFIX: settings.integration.account.gov.uk
+      DNSSUFFIX: home.integration.account.gov.uk
     production:
-      DNSSUFFIX: settings.account.gov.uk
+      DNSSUFFIX: home.account.gov.uk
 
 Resources:
-  WebACL:
+  #
+  # WAFv2 WebACL
+  #
+
+  WebACLNonProd:
+    Condition: IsNotProduction
     Type: AWS::WAFv2::WebACL
     Properties:
       Name: !Sub "${AWS::StackName}-WebACL"
@@ -113,6 +123,57 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
+  WebACLProd:
+    Condition: IsProduction
+    Type: AWS::WAFv2::WebACL
+    Properties:
+      Name: !Sub "${AWS::StackName}-WebACL"
+      DefaultAction:
+        Block: { }
+      Scope: CLOUDFRONT
+      Rules:
+        - Name: AWS-AWMManagedRuleCommonRuleSet
+          OverrideAction:
+            Count: { }
+          Priority: 20
+          Statement:
+            ManagedRuleGroupStatement:
+              Name: AWSManagedRulesCommonRuleSet
+              VendorName: AWS
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: TRUE
+            MetricName: !Sub "${AWS::StackName}-AWSCRShits"
+            SampledRequestsEnabled: FALSE
+        - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet
+          Priority: 30
+          OverrideAction:
+            None: { }
+          Statement:
+            ManagedRuleGroupStatement:
+              VendorName: AWS
+              Name: AWSManagedRulesKnownBadInputsRuleSet
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: TRUE
+            MetricName: !Sub "${AWS::StackName}-AWSKBIhits"
+            SampledRequestsEnabled: FALSE
+      VisibilityConfig:
+        CloudWatchMetricsEnabled: TRUE
+        MetricName: !Sub "${AWS::StackName}-WAFv2hits"
+        SampledRequestsEnabled: FALSE
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-WAFv2"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
   # The IP address blocks below are referenced from here:
   # https://sites.google.com/a/digital.cabinet-office.gov.uk/gds/working-at-gds/gds-internal-it/gds-internal-it-network-public-ip-addresses
   WAFv2GDSIPSet:
@@ -149,29 +210,44 @@ Resources:
   # DNS Certificate
   #
 
-  SettingsExternalCertificate:
+  HomeExternalCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Sub
         - "${DNSSUFFIX}"
-        - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
-
+        - DNSSUFFIX: !FindInMap [ HomePlatformConfiguration, !Ref Environment, DNSSUFFIX ]
       SubjectAlternativeNames:
         - !Sub
           - "*.${DNSSUFFIX}"
-          - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
-
+          - DNSSUFFIX: !FindInMap [ HomePlatformConfiguration, !Ref Environment, DNSSUFFIX ]
       DomainValidationOptions:
         - DomainName: !Sub
             - "${DNSSUFFIX}"
-            - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+            - DNSSUFFIX: !FindInMap [ HomePlatformConfiguration, !Ref Environment, DNSSUFFIX ]
           ValidationDomain: !Ref ValidationDomain
       ValidationMethod: DNS
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-HomeExternalCertificate"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
 
 Outputs:
   WAFv2WebACLARN:
     Description: The ARN of the WAFv2 WebACL.
-    Value: !GetAtt WebACL.Arn
-  SettingsCertificateARN:
-    Description: The ARN of the Settings domain certificate.
-    Value: !Ref SettingsExternalCertificate
+    Value: !If
+      - IsProduction
+      - !GetAtt WebACLProd.Arn
+      - !GetAtt WebACLNonProd.Arn
+  HomeCertificateARN:
+    Description: The ARN of the Home domain certificate.
+    Value: !Ref HomeExternalCertificate
