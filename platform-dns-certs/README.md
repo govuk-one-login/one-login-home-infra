@@ -13,7 +13,7 @@ This stack will create the SSL/TLS certificate for the subdomain.
 
 ### Domains
 The template creates Certificates for the following subdomain(s):
-- `settings`
+- `home`
 
 ## Deployment
 To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
@@ -43,6 +43,6 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ```
 
 ### Stack Outputs
-| Type          | Name                                                              | Description                                       |
-|---------------|-------------------------------------------------------------------|---------------------------------------------------|
-| SSM Parameter | `/<Environment>/Platform/ACM/HostedZone/Certificate/Settings/ARN` | The ARN of the ACM cert for the `settings` domain |
+| Type          | Name                                                          | Description                                   |
+|---------------|---------------------------------------------------------------|-----------------------------------------------|
+| SSM Parameter | `/<Environment>/Platform/ACM/HostedZone/Certificate/Home/ARN` | The ARN of the ACM cert for the `home` domain |
