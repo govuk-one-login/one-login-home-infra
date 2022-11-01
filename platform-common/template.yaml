@@ -1,0 +1,149 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  Externalises values referenced across multiple CloudFormation Stacks.
+  This prevents having to individually update each reference of a single value across multiple Stacks.
+  Values will instead resolve as SSM parameters or Secrets acting as the single source of truth.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK Sign In
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Management
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/platform-common/template.yaml
+
+Conditions:
+  IsNotDevelopment: !Or
+    - !Equals [ !Ref Environment, build ]
+    - !Equals [ !Ref Environment, staging ]
+    - !Equals [ !Ref Environment, integration ]
+    - !Equals [ !Ref Environment, production ]
+
+Resources:
+  #
+  # SSM Parameter
+  #
+
+  CSLSLogsSubscriptionARN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The CSLS CloudWatch Logs Destination ARN
+      Name: !Sub "/${Environment}/Platform/Logs/Subscription/CSLS/ARN"
+      Type: String
+      Value: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  GlobalWAFACLARN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: >
+        The Global (us-east-1) Web ACL ARN to be used to protect Account solutions delivered via a CloudFront Distribution
+      Name: !Sub "/${Environment}/Platform/WAF/Global/ACL/ARN"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  GlobalHomeCertARN:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: >
+        The Global (us-east-1) ACM Cert used to associate the home subdomain with the CloudFront Distribution
+      Name: !Sub "/${Environment}/Platform/ACM/Global/Certificate/Home/ARN"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  #
+  # SecretsManager
+  #
+
+  # see https://govukverify.atlassian.net/wiki/spaces/PLAT/pages/3062726680/How+to+prepare+AWS+accounts+for+containing+SAM+deployment+pipelines#Grafana-metrics
+  GrafanaApiKey:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "pipeline-grafana-api-key"
+      Description: "Accounts - Grafana API Key"
+      SecretString: "placeholder-value"
+      KmsKeyId: !Ref SecretsEncryptionKMSKeyAlias
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-GrafanaApiKey"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  SecretsEncryptionKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: >
+        KMS key used to protect secret configuration values used across the platform.
+        Required by roles who need to update config values.
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: !Sub "secretsmanager.amazonaws.com"
+            Action:
+              - "kms:*"
+            Resource: "*"
+            Condition:
+              ArnLike:
+                aws:SourceArn: !Sub "arn:aws:secretsmanager:${AWS::Region}:${AWS::AccountId}:secret:/pipeline-grafana-api-key"
+
+  SecretsEncryptionKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-SecretsEncryptionKMSKey"
+      TargetKeyId: !Ref SecretsEncryptionKMSKey
