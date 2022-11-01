@@ -34,24 +34,6 @@ Resources:
       Type: String
       Value: !GetAtt HomeHostedZone.Id
 
-  SettingsHostedZone:
-    Type: AWS::Route53::HostedZone
-    DeletionPolicy: Retain
-    UpdateReplacePolicy: Retain
-    Properties:
-      Name: !If
-        - IsProduction
-        - settings.account.gov.uk
-        - !Sub settings.${Environment}.account.gov.uk
-
-  SettingsHostedZoneSSM:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Description: The ID of hosted zone for the settings domain
-      Name: !Sub "/${Environment}/Platform/Route53/HostedZone/Settings"
-      Type: String
-      Value: !GetAtt SettingsHostedZone.Id
-
 Outputs:
   HomeHostedZoneNameServers:
     Value: !Join
@@ -63,13 +45,3 @@ Outputs:
     Value: !GetAtt HomeHostedZone.Id
     Export:
       Name: HomeHostedZoneId
-  SettingsHostedZoneNameServers:
-    Value: !Join
-      - ","
-      - !GetAtt SettingsHostedZone.NameServers
-    Export:
-      Name: SettingsHostedZoneNameServers
-  SettingsHostedZoneId:
-    Value: !GetAtt SettingsHostedZone.Id
-    Export:
-      Name: SettingsHostedZoneId

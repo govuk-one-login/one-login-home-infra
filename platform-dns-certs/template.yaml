@@ -4,17 +4,15 @@ Description: >-
   Creates the necessary components to manage DNS in Accounts.
 
 Mappings:
-  SettingsPlatformConfiguration:
-    dev:
-      DNSSUFFIX: settings.build.account.gov.uk
+  PlatformConfiguration:
     build:
-      DNSSUFFIX: settings.build.account.gov.uk
+      home: home.build.account.gov.uk
     staging:
-      DNSSUFFIX: settings.staging.account.gov.uk
+      home: home.staging.account.gov.uk
     integration:
-      DNSSUFFIX: settings.integration.account.gov.uk
+      home: home.integration.account.gov.uk
     production:
-      DNSSUFFIX: settings.account.gov.uk
+      home: home.account.gov.uk
 
 Parameters:
   Environment:
@@ -27,31 +25,30 @@ Parameters:
       - production
 
 Resources:
-  SettingsExternalCertificate:
+
+  HomeDomainCertificate:
     Type: AWS::CertificateManager::Certificate
     Properties:
       DomainName: !Sub
         - "${DNSSUFFIX}"
-        - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
-
+        - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
       SubjectAlternativeNames:
         - !Sub
           - "*.${DNSSUFFIX}"
-          - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
-
+          - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
       DomainValidationOptions:
         - DomainName: !Sub
             - "${DNSSUFFIX}"
-            - DNSSUFFIX: !FindInMap [ SettingsPlatformConfiguration, !Ref Environment, DNSSUFFIX ]
-          HostedZoneId: !ImportValue SettingsHostedZoneId
+            - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
+          HostedZoneId: !ImportValue HomeHostedZoneId
       ValidationMethod: DNS
 
-  SettingsCertificateARNSSM:
+  HomeCertificateARNSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: The Certificate ARN
-      Name: !Sub "/${Environment}/Platform/ACM/HostedZone/Certificate/Settings/ARN"
+      Description: The Home Domain Certificate ARN
+      Name: !Sub "/${Environment}/Platform/ACM/HostedZone/Certificate/Home/ARN"
       Type: String
-      Value: !Ref   SettingsExternalCertificate
+      Value: !Ref HomeDomainCertificate
       Tags:
         VPC: !Sub ${AWS::StackName}

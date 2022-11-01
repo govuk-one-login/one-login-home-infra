@@ -17,7 +17,6 @@ N.B. the hosted zone(s) created by this template are retained even when the Stac
 ### Domains
 The template creates a Hosted Zone for the following subdomain(s):
  - `home`
- - `settings`
 
 ## Deployment
 To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
@@ -52,6 +51,3 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 | Stack Export  | `HomeHostedZoneNameServers`                           | Comma separated list of Nameservers |
 | Stack Export  | `HomeHostedZoneId`                                    | Id of the Route 53 Hosted Zone      |
 | SSM Parameter | `/<environment>/Platform/Route53/HostedZone/Home`     | Id of the Route 53 Hosted Zone      |
-| Stack Export  | `SettingsHostedZoneNameServers`                       | Comma separated list of Nameservers |
-| Stack Export  | `SettingsHostedZoneId`                                | Id of the Route 53 Hosted Zone      |
-| SSM Parameter | `/<environment>/Platform/Route53/HostedZone/Settings` | Id of the Route 53 Hosted Zone      |
