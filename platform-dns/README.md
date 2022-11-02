@@ -1,7 +1,7 @@
 # Accounts - DNS Hosted Zones
 
 ## Intro
-The CloudFormation template creates a hosted zone for `<subdomain>.accounts.gov.uk` 
+The CloudFormation template creates a hosted zone for `<subdomain>.account.gov.uk` 
 or `<subdomain>.<environment>.accounts.gov.uk` if environment is not `production`.
 
 This Stack is deployed manually once per account/environment 
