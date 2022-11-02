@@ -2,7 +2,7 @@
 
 ## Intro
 The CloudFormation template creates an ACM Certificate for `<subdomain>.account.gov.uk`
-or `<subdomain>.<environment>.accounts.gov.uk` if environment is not `production`.
+or `<subdomain>.<environment>.account.gov.uk` if environment is not `production`.
 
 This Stack is deployed manually once per account/environment as part of the DNS set up process.
 This stack should only be deployed **__after__** the 
