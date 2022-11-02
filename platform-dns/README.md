@@ -30,7 +30,7 @@ aws cloudformation create-stack --stack-name dns-zones-<environment> \
 --template-body file://$(pwd)/platform-dns/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
 --parameters ParameterKey=Environment,ParameterValue="<environment>" \
---tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Account" \
+--tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Accounts" \
 Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digital.cabinet-office.gov.uk"
 ```
 
@@ -41,7 +41,7 @@ aws cloudformation update-stack --stack-name dns-zones-<environment> \
 --template-body file://$(pwd)/platform-dns/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \
 --parameters ParameterKey=Environment,ParameterValue="<environment>" \
---tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Account" \
+--tags Key=Product,Value="GOV.UK Sign In" Key=System,Value="Accounts" \
 Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digital.cabinet-office.gov.uk"
 ```
 
