@@ -44,15 +44,17 @@ Conditions:
     - !Equals [ !Ref Environment, integration ]
 
 Mappings:
-  HomePlatformConfiguration:
+  PlatformConfiguration:
+    dev:
+      home: home.dev.account.gov.uk
     build:
-      DNSSUFFIX: home.build.account.gov.uk
+      home: home.build.account.gov.uk
     staging:
-      DNSSUFFIX: home.staging.account.gov.uk
+      home: home.staging.account.gov.uk
     integration:
-      DNSSUFFIX: home.integration.account.gov.uk
+      home: home.integration.account.gov.uk
     production:
-      DNSSUFFIX: home.account.gov.uk
+      home: home.account.gov.uk
 
 Resources:
   #
@@ -215,15 +217,15 @@ Resources:
     Properties:
       DomainName: !Sub
         - "${DNSSUFFIX}"
-        - DNSSUFFIX: !FindInMap [ HomePlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+        - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
       SubjectAlternativeNames:
         - !Sub
           - "*.${DNSSUFFIX}"
-          - DNSSUFFIX: !FindInMap [ HomePlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+          - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
       DomainValidationOptions:
         - DomainName: !Sub
             - "${DNSSUFFIX}"
-            - DNSSUFFIX: !FindInMap [ HomePlatformConfiguration, !Ref Environment, DNSSUFFIX ]
+            - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
           ValidationDomain: !Ref ValidationDomain
       ValidationMethod: DNS
       Tags:
