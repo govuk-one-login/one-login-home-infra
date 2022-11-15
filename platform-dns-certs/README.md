@@ -18,7 +18,7 @@ The template creates Certificates for the following subdomain(s):
 ## Deployment
 To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
 
-Replace `<environment>` with `build`, `staging`, `integration`, `production` in either of the commands below.
+Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in either of the commands below.
 
 ### Creating a New Stack
 ```bash

@@ -3,8 +3,21 @@ AWSTemplateFormatVersion: "2010-09-09"
 Description: >-
   Creates the necessary components to manage DNS in Accounts.
 
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - dev
+      - build
+      - staging
+      - integration
+      - production
+
 Mappings:
   PlatformConfiguration:
+    dev:
+      home: home.dev.account.gov.uk
     build:
       home: home.build.account.gov.uk
     staging:
@@ -13,16 +26,6 @@ Mappings:
       home: home.integration.account.gov.uk
     production:
       home: home.account.gov.uk
-
-Parameters:
-  Environment:
-    Description: The name of the environment to deploy to
-    Type: String
-    AllowedValues:
-      - build
-      - staging
-      - integration
-      - production
 
 Resources:
 
