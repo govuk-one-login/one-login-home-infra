@@ -36,12 +36,13 @@ Parameters:
     Default: alphagov/di-accounts-infra/platform-global-resources/template.yaml
 
 Conditions:
-  IsProduction: !Equals [ !Ref Environment, production ]
-  IsNotProduction: !Or
+  IsExternal: !Or 
+    - !Equals [ !Ref Environment, production ]
+    - !Equals [ !Ref Environment, integration ]
+  IsInternal: !Or
     - !Equals [ !Ref Environment, dev ]
     - !Equals [ !Ref Environment, build ]
     - !Equals [ !Ref Environment, staging ]
-    - !Equals [ !Ref Environment, integration ]
 
 Mappings:
   PlatformConfiguration:
@@ -61,8 +62,8 @@ Resources:
   # WAFv2 WebACL
   #
 
-  WebACLNonProd:
-    Condition: IsNotProduction
+  WebACLInternal:
+    Condition: IsInternal
     Type: AWS::WAFv2::WebACL
     Properties:
       Name: !Sub "${AWS::StackName}-WebACL"
@@ -125,8 +126,8 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
-  WebACLProd:
-    Condition: IsProduction
+  WebACLExternal:
+    Condition: IsExternal
     Type: AWS::WAFv2::WebACL
     Properties:
       Name: !Sub "${AWS::StackName}-WebACL"
@@ -247,9 +248,9 @@ Outputs:
   WAFv2WebACLARN:
     Description: The ARN of the WAFv2 WebACL.
     Value: !If
-      - IsProduction
-      - !GetAtt WebACLProd.Arn
-      - !GetAtt WebACLNonProd.Arn
+      - IsExternal
+      - !GetAtt WebACLExternal.Arn
+      - !GetAtt WebACLInternal.Arn
   HomeCertificateARN:
     Description: The ARN of the Home domain certificate.
     Value: !Ref HomeExternalCertificate
