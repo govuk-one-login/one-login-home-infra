@@ -132,7 +132,7 @@ Resources:
     Properties:
       Name: !Sub "${AWS::StackName}-WebACL"
       DefaultAction:
-        Block: { }
+        Allow: { }
       Scope: CLOUDFRONT
       Rules:
         - Name: AWS-AWMManagedRuleCommonRuleSet
