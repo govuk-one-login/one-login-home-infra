@@ -137,7 +137,7 @@ Resources:
       Rules:
         - Name: AWS-AWMManagedRuleCommonRuleSet
           OverrideAction:
-            Count: { }
+            None: { }
           Priority: 20
           Statement:
             ManagedRuleGroupStatement:
