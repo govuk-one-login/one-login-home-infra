@@ -109,6 +109,15 @@ Resources:
         -
           AttributeName: "id"
           KeyType: "HASH"
+        -
+          AttributeName: "expires"
+          KeyType: "HASH"
+        -
+          AttributeName: "type"
+          KeyType: "HASH"
+        -
+          AttributeName: "sess"
+          KeyType: "HASH"
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
