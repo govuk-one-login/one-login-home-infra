@@ -52,6 +52,11 @@ Parameters:
     Description: "The ARN of the permissions boundary to apply to any role created by the template"
     Default: "none"
 
+  SystemTagValue:
+    Type: String
+    Description: Value for the System Tag
+    Default: Accounts
+
 Conditions:
   IsProduction: !Equals [ !Ref Environment, production ]
   UsePermissionsBoundary:
@@ -101,8 +106,9 @@ Resources:
       #        Csv:
       #          Csv #Figure out later?
       KeySchema:
-        AttributeName: "id"
-        KeyType: "HASH"
+        -
+          AttributeName: "id"
+          KeyType: "HASH"
       ProvisionedThroughput:
         ReadCapacityUnits: 5
         WriteCapacityUnits: 5
