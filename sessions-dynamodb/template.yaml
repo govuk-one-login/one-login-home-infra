@@ -78,27 +78,21 @@ Resources:
           AttributeName: "id"
           AttributeType: "S"
         -
-          AttributeName: "expires"
-          AttributeType: "N"
-        -
-          AttributeName: "type"
+          AttributeName: "subjectId"
           AttributeType: "S"
-        -
-          AttributeName: "sess"
-          AttributeType: "S"
-      #          AttributeName: "subjectId"
-      #          AttributeType: "S" - part of GSI
       BillingMode: PROVISIONED
       ContributorInsightsSpecification:
         Enabled: true
-      #      GlobalSecondaryIndexes: # Karla - not just primary key indexing - TBC
-      #        IndexName: subjectIdIndex
-      #        KeySchema: HASH
-      #        Projection:
-      #          ProjectionType: KEYS_ONLY
-      #        ProvisionedThroughput:
-      #          ReadCapacityUnits: Integer
-      #          WriteCapacityUnits: Integer
+      GlobalSecondaryIndexes: # Karla - not just primary key indexing - TBC
+        IndexName: "subjectIdIndex"
+        KeySchema:
+          AttributeName: "subjectId"
+          KeyType: "HASH"
+        Projection:
+          ProjectionType: KEYS_ONLY
+#        ProvisionedThroughput:
+#            ReadCapacityUnits: Integer
+#            WriteCapacityUnits: Integer
       # ImportSourceSpecification: #properties of data being imported from the S3 bucket to table.
       #        InputCompressionType: String #GZIP | NONE | ZSTD ???
       #        InputFormat: String  # CSV | >DYNAMODB_JSON<  | ION
@@ -108,15 +102,6 @@ Resources:
       KeySchema:
         -
           AttributeName: "id"
-          KeyType: "HASH"
-        -
-          AttributeName: "expires"
-          KeyType: "HASH"
-        -
-          AttributeName: "type"
-          KeyType: "HASH"
-        -
-          AttributeName: "sess"
           KeyType: "HASH"
       ProvisionedThroughput:
         ReadCapacityUnits: 5
