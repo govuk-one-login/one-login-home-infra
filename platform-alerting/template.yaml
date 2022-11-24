@@ -1,0 +1,244 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  Sets up prerequisite resources and placeholders used by the Authentication Account Management (AAM) webapp.
+  The KMS key's Public key is the AAM webapp server's Client Secret.
+  The KMS key used for signing JWTs so that OP can authenticate the RP (runtime dependency).
+  The stack also create SSM Parameters and Secrets placeholder resources.
+  These placeholder resources are for storing config values used when the account-mgmt-frontend Cfn stack is
+  deployed (deploy-time dependencies).
+
+Metadata:
+  AWS::CloudFormation::Interface:
+    ParameterGroups:
+      - Label:
+          default: "Alert notifications"
+        Parameters:
+          - SlackWorkspaceId
+          - SlackChannelId
+          - SubscriptionEndpoint
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK Sign In
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/platform-alarming/template.yaml
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Accounts
+  PermissionsBoundary:
+    Description: The ARN of the permissions boundary to apply when creating IAM roles
+    Type: String
+    Default: none
+  SlackWorkspaceId:
+    Description: >
+      The ID of the Slack workspace where alert notification messages are
+      posted. This is retrieved from the AWS Chatbot integration.
+    Type: String
+    Default: "T8GT9416G"
+    AllowedPattern: "\\w+"
+    ConstraintDescription: "must be an AWS Chatbot Slack workspace ID"
+  SlackChannelId:
+    Description: >
+      The ID of the Slack channel where alert notification messages are posted.
+      This is taken from the channel details in Slack.
+    Type: String
+    Default: T8GT9416G
+    AllowedPattern: "\\w+"
+    ConstraintDescription: "must be a Slack channel ID"
+  SubscriptionEndpoint:
+    Description: >
+      External API subscription endpoint i.e. PagerDuty events integration API
+    Type: String
+    Default: "none"
+    AllowedPattern: "(^https://.+)|(none)"
+    ConstraintDescription: "Must be a URL of format (https://.*) or leave as 'none'"
+
+Conditions:
+  CreateSNSSubscription:
+    Fn::Not:
+      - Fn::Equals:
+          - !Ref SubscriptionEndpoint
+          - "none"
+
+Resources:
+  #
+  # Alert SNS Topic
+  #
+
+  AlertNotificationTopic:
+    Type: AWS::SNS::Topic
+    Properties:
+      KmsMasterKeyId: !Ref AlertNotificationTopicKey
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "AlertNotificationTopic"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  AlertNotificationTopicPolicy:
+    Type: AWS::SNS::TopicPolicy
+    Properties:
+      Topics:
+        - !Ref AlertNotificationTopic
+      PolicyDocument:
+        Statement:
+          - Action: "sns:Publish"
+            Effect: Allow
+            Resource: !Ref AlertNotificationTopic
+            Principal:
+              Service: codestar-notifications.amazonaws.com
+
+  AlertNotificationTopicKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Sid: "Allow the account to manage the key"
+            Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action: "kms:*"
+            Resource: "*"
+          - Sid: "Allow CodeStar Notifications to enqueue encrypted messages"
+            Effect: Allow
+            Resource: "*"
+            Action:
+              - "kms:Decrypt"
+              - "kms:GenerateDataKey"
+            Principal:
+              Service: "codestar-notifications.amazonaws.com"
+          - Sid: "Allow Cloudwatch alerts access"
+            Effect: Allow
+            Principal:
+              Service: cloudwatch.amazonaws.com
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource:
+              - "*"
+      Tags:
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-AlertNotificationTopicKey"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  #
+  # Slack Chatbot Integration
+  #
+
+  CodeStarNotificationsServiceLinkedRole:
+    Type: AWS::IAM::ServiceLinkedRole
+    DeletionPolicy: Retain
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3011  # The UpdateReplacePolicy does not apply to this resource
+    Properties:
+      AWSServiceName: codestar-notifications.amazonaws.com
+
+  ChatbotRole:
+    Type: AWS::IAM::Role
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "chatbot.amazonaws.com"
+            Action:
+              - "sts:AssumeRole"
+      Tags:
+        - Key: Name
+          Value: !Join
+            - "-"
+            - - !Ref AWS::StackName
+              - "ChatbotRole"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  ChatbotChannelConfiguration:
+    Type: AWS::Chatbot::SlackChannelConfiguration
+#    DependsOn: ChatbotServiceLinkedRole
+    Properties:
+      ConfigurationName: !Sub "${AWS::StackName}-alert-notifications"
+      IamRoleArn: !GetAtt ChatbotRole.Arn
+      SlackChannelId: !Ref SlackChannelId
+      SlackWorkspaceId: !Ref SlackWorkspaceId
+      SnsTopicArns:
+        - !Ref AlertNotificationTopic
+
+  #
+  # PagerDuty Integration
+  #
+
+  AlertNotificationTopicSubscription:
+    Condition: CreateSNSSubscription
+    Type: AWS::SNS::Subscription
+    Properties:
+      Endpoint: !Ref SubscriptionEndpoint
+      Protocol: 'https'
+      TopicArn: !Ref AlertNotificationTopic
+
+  #
+  # Outputs
+  #
+
+Outputs:
+  AlertNotificationTopicArn:
+    Description: >
+      The ARN of the SNS topic that receives CloudWatch alert notifications that gets sent to Slack.
+    Value: !Ref AlertNotificationTopic
+    Export:
+      Name: !Sub "${AWS::StackName}-AlertNotificationTopicArn"
