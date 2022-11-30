@@ -1,0 +1,63 @@
+AWSTemplateFormatVersion: '2010-09-09'
+
+Description: >
+  This template contains IAM permissions for access that's not specific to an application.
+  It should not be used for managing developer access.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+      - "staging"
+      - "integration"
+      - "production"
+
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK One Login
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Account Management
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/iam-permissions/template.yaml
+
+Resources:
+  ControlTowerRole:
+    Type: AWS::IAM::Role
+    Properties: 
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS:
+                - arn:aws:iam::892537467220:root
+            Action:
+              - 'sts:AssumeRole'
+
+      ManagedPolicyArns: 
+        - arn:aws:iam::aws:policy/AdministratorAccess
+      RoleName: AWSControlTowerExecution
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
