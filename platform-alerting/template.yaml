@@ -18,7 +18,6 @@ Parameters:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
-      - "dev"
       - "build"
       - "staging"
       - "integration"
@@ -161,10 +160,16 @@ Resources:
             - "-"
             - - !Ref AWS::StackName
               - "BuildNotificationTopic"
-        - Key: Service
-          Value: "ci/cd"
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
         - Key: Source
-          Value: "alphagov/di-devplatform-deploy/build-notifications/template.yaml"
+          Value: !Ref SourceTagValue
 
   BuildNotificationTopicPolicy:
     Type: AWS::SNS::TopicPolicy
@@ -264,7 +269,7 @@ Resources:
 
   ChatbotChannelConfiguration:
     Type: AWS::Chatbot::SlackChannelConfiguration
-#    DependsOn: ChatbotServiceLinkedRole
+    DependsOn: ChatbotServiceLinkedRole
     Properties:
       ConfigurationName: !Sub "${AWS::StackName}-slack-notifications"
       IamRoleArn: !GetAtt ChatbotRole.Arn
@@ -286,16 +291,16 @@ Resources:
     Properties:
       AWSServiceName: codestar-notifications.amazonaws.com
 
-#  ChatbotServiceLinkedRole:
-#    Type: AWS::IAM::ServiceLinkedRole
-#    DeletionPolicy: Retain
-#    Metadata:
-#      cfn-lint:
-#        config:
-#          ignore_checks:
-#            - W3011  # The UpdateReplacePolicy does not apply to this resource
-#    Properties:
-#      AWSServiceName: management.chatbot.amazonaws.com
+  ChatbotServiceLinkedRole:
+    Type: AWS::IAM::ServiceLinkedRole
+    DeletionPolicy: Retain
+    Metadata:
+      cfn-lint:
+        config:
+          ignore_checks:
+            - W3011  # The UpdateReplacePolicy does not apply to this resource
+    Properties:
+      AWSServiceName: management.chatbot.amazonaws.com
 
   #
   # PagerDuty Integration
