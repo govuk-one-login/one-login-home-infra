@@ -11,9 +11,25 @@ Parameters:
     AllowedValues:
       - "dev"
       - "build"
+  ProductTagValue:
+    Description: Value for the Product Tag
+    Type: String
+    Default: GOV.UK Sign In
+#  SystemTagValue:
+#    Description: Value for the System Tag
+#    Type: String
+#    Default: Account Management
+  OwnerTagValue:
+    Description: Value for the Owner Tag
+    Type: String
+    Default: govuk-accounts-tech@digital.cabinet-office.gov.uk
+  SourceTagValue:
+    Description: Value for the Source Tag
+    Type: String
+    Default: alphagov/di-accounts-infra/mocks/template.yaml
 
 Resources:
-  MockPublishingApi:
+  MockPublishingAPI:
     Type: AWS::Serverless::Api
     Properties:
       MethodSettings:
@@ -25,18 +41,18 @@ Resources:
           ThrottlingRateLimit: 500
           ThrottlingBurstLimit: 1000
       AccessLogSetting:
-        DestinationArn: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${ApiAccessLogGroup}'
-        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user","requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }'
+        DestinationArn: !GetAtt MockPublishingAPIAccessLogGroup.Arn
+        Format: '{"requestTime":"$context.requestTime", "requestId":"$context.requestId", "httpMethod":"$context.httpMethod", "path": "$context.path", "resourcePath":"$context.resourcePath", "status":"$context.status", "responseLength":"$context.responseLength", "responseLatency": $context.responseLatency, "xrayTraceId": "$context.xrayTraceId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user",}'
       TracingEnabled: true
-      Name: "mock-stack"
+      Name: !Sub "${AWS::StackName}-MockPublishingAPI"
       StageName: !Ref Environment
       OpenApiVersion: 3.0.1
       DefinitionBody:
         openapi: "3.0.1"
         info:
           version: "1.0"
-          title: "Mock Publishing Service endpoint"
-          description: A mock endpoint for the Publishing Service
+          title: "Mock Publishing Service"
+          description: A mock endpoint for the Publishing Service endpoint
 
         x-amazon-apigateway-request-validators:
           all:
@@ -46,7 +62,7 @@ Resources:
             validateRequestBody: false
             validateRequestParameters: true
         x-amazon-apigateway-request-validator: params-only
-
+        
         paths:
           api/oidc-users/{subject-identifier}:
             put:
@@ -108,14 +124,41 @@ Resources:
                 type: mock
       EndpointConfiguration:
         Type: REGIONAL
-  ApiAccessLogGroup:
+      Tags:
+        Name:
+        Product: !Ref ProductTagValue
+#        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  MockPublishingAPIAccessLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/apigateway/AccessLog-MockAPIGateway/${Environment}
+      LogGroupName: !Sub /aws/apigateway/mock-publishing-api-access-logs/${Environment}
       RetentionInDays: 30
+#      Tags:
+#        Product: !Ref ProductTagValue
+#        #        System: !Ref SystemTagValue
+#        Environment: !Ref Environment
+#        Owner: !Ref OwnerTagValue
+#        Source: !Ref SourceTagValue
 
-
+  MockPublishingAPIEndpointParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: The HTTP URL of the mock Publishing API
+      Name: !Sub "/${Environment}/${AWS::StackName}/${MockPublishingAPI}"
+      Type: String
+      Value: !Sub "https://${MockPublishingAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+      Tags:
+        Product: !Ref ProductTagValue
+#        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+  
 Outputs:
-  MockPublishingApiSEndpoint:
-    Description: "The http url of the mock publishing API endpoint"
-    Value: !Sub "https://${MockPublishingApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
+  MockPublishingAPIEndpoint:
+    Description: The HTTP URL of the mock Publishing API
+    Value: !Sub "https://${MockPublishingAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
