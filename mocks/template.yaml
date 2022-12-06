@@ -15,10 +15,10 @@ Parameters:
     Description: Value for the Product Tag
     Type: String
     Default: GOV.UK Sign In
-#  SystemTagValue:
-#    Description: Value for the System Tag
-#    Type: String
-#    Default: Account Management
+  SystemTagValue:
+    Description: Value for the System Tag
+    Type: String
+    Default: Accounts
   OwnerTagValue:
     Description: Value for the Owner Tag
     Type: String
@@ -42,9 +42,9 @@ Resources:
           ThrottlingBurstLimit: 1000
       AccessLogSetting:
         DestinationArn: !GetAtt MockPublishingAPIAccessLogGroup.Arn
-        Format: '{"requestTime":"$context.requestTime", "requestId":"$context.requestId", "httpMethod":"$context.httpMethod", "path": "$context.path", "resourcePath":"$context.resourcePath", "status":"$context.status", "responseLength":"$context.responseLength", "responseLatency": $context.responseLatency, "xrayTraceId": "$context.xrayTraceId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user",}'
+        Format: '{ "requestTime":"$context.requestTime", "requestId":"$context.requestId", "httpMethod":"$context.httpMethod", "path": "$context.path", "resourcePath":"$context.resourcePath", "status":"$context.status", "responseLength":"$context.responseLength", "responseLatency": $context.responseLatency, "xrayTraceId": "$context.xrayTraceId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user" }'
       TracingEnabled: true
-      Name: !Sub "${AWS::StackName}-MockPublishingAPI"
+      Name: !Sub "/${Environment}/MockPublishingAPI"
       StageName: !Ref Environment
       OpenApiVersion: 3.0.1
       DefinitionBody:
@@ -52,27 +52,40 @@ Resources:
         info:
           version: "1.0"
           title: "Mock Publishing Service"
-          description: A mock endpoint for the Publishing Service endpoint
+          description: A mock endpoint for the Publishing Service
 
         x-amazon-apigateway-request-validators:
           all:
             validateRequestBody: true
             validateRequestParameters: true
           params-only:
-            validateRequestBody: false
+            validateRequestBody: true
             validateRequestParameters: true
         x-amazon-apigateway-request-validator: params-only
-        
+
         paths:
           api/oidc-users/{subject-identifier}:
             put:
+              requestBody:
+                description: The request body
+                required: true
+                content:
+                  application/json:
+                    schema:
+                      type: object
+                      properties:
+                        email:
+                          type: string
+                          format: email
+                      required:
+                        - email
               parameters:
                 - in: path
                   name: subject-identifier
+                  description: The subject identifier of the user to update
+                  required: true
                   schema:
                     type: string
-                  required: true
-                  description: The subject identifier of the user to update
               responses:
                 "200":
                   description: OK
@@ -84,6 +97,7 @@ Resources:
                             type: string
                           email:
                             type: string
+                            format: email
                           email_verified:
                             type: boolean
                         required:
@@ -97,9 +111,14 @@ Resources:
                     statusCode: "200"
                     responseTemplates:
                       application/json: >
-                        { "sub": "$input.params().path.subject-identifier", "email": "user@example.com", "email_verified": true }
+                        #set($body = $context.requestOverride.path.body)
+                        { "sub": "$input.params().path.subject-identifier", "email": "$util.parseJson($body).email", "email_verified": true }
                 requestTemplates:
-                  application/json: "{\"statusCode\": 204}"
+                  application/json: >
+                    #set($context.requestOverride.path.body = $input.body)
+                    {
+                        "statusCode": 200
+                    }
                 passthroughBehavior: never
                 type: mock
             delete:
@@ -119,15 +138,17 @@ Resources:
                   default:
                     statusCode: "204"
                 requestTemplates:
-                  application/json: "{\"statusCode\": 204}"
+                  application/json: >
+                    {
+                        "statusCode": 204
+                    }
                 passthroughBehavior: never
                 type: mock
       EndpointConfiguration:
         Type: REGIONAL
       Tags:
-        Name:
         Product: !Ref ProductTagValue
-#        System: !Ref SystemTagValue
+        System: !Ref SystemTagValue
         Environment: !Ref Environment
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
@@ -135,29 +156,34 @@ Resources:
   MockPublishingAPIAccessLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
-      LogGroupName: !Sub /aws/apigateway/mock-publishing-api-access-logs/${Environment}
+      LogGroupName: !Sub "/aws/apigateway/mock-publishing-api-access-logs/${Environment}"
       RetentionInDays: 30
-#      Tags:
-#        Product: !Ref ProductTagValue
-#        #        System: !Ref SystemTagValue
-#        Environment: !Ref Environment
-#        Owner: !Ref OwnerTagValue
-#        Source: !Ref SourceTagValue
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
 
   MockPublishingAPIEndpointParameter:
     Type: AWS::SSM::Parameter
     Properties:
       Description: The HTTP URL of the mock Publishing API
-      Name: !Sub "/${Environment}/${AWS::StackName}/${MockPublishingAPI}"
+      Name: !Sub "/${Environment}/APIGateway/MockPublishingAPI/Endpoint"
       Type: String
       Value: !Sub "https://${MockPublishingAPI}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
       Tags:
         Product: !Ref ProductTagValue
-#        System: !Ref SystemTagValue
+        System: !Ref SystemTagValue
         Environment: !Ref Environment
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
-  
+
 Outputs:
   MockPublishingAPIEndpoint:
     Description: The HTTP URL of the mock Publishing API
