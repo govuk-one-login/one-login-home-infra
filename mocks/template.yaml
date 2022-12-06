@@ -1,0 +1,121 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Transform: AWS::Serverless-2016-10-31
+
+Description: Mocks that should only be created once in the development and build environments.
+
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    Default: dev
+    AllowedValues:
+      - "dev"
+      - "build"
+
+Resources:
+  MockPublishingApi:
+    Type: AWS::Serverless::Api
+    Properties:
+      MethodSettings:
+        - LoggingLevel: INFO
+          ResourcePath: '/*'
+          HttpMethod: '*'
+          DataTraceEnabled: true
+          MetricsEnabled: true
+          ThrottlingRateLimit: 500
+          ThrottlingBurstLimit: 1000
+      AccessLogSetting:
+        DestinationArn: !Sub 'arn:${AWS::Partition}:logs:${AWS::Region}:${AWS::AccountId}:log-group:${ApiAccessLogGroup}'
+        Format: '{ "requestId":"$context.requestId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user","requestTime":"$context.requestTime", "httpMethod":"$context.httpMethod","resourcePath":"$context.resourcePath", "status":"$context.status","protocol":"$context.protocol", "responseLength":"$context.responseLength" }'
+      TracingEnabled: true
+      Name: "mock-stack"
+      StageName: !Ref Environment
+      OpenApiVersion: 3.0.1
+      DefinitionBody:
+        openapi: "3.0.1"
+        info:
+          version: "1.0"
+          title: "Mock Publishing Service endpoint"
+          description: A mock endpoint for the Publishing Service
+
+        x-amazon-apigateway-request-validators:
+          all:
+            validateRequestBody: true
+            validateRequestParameters: true
+          params-only:
+            validateRequestBody: false
+            validateRequestParameters: true
+        x-amazon-apigateway-request-validator: params-only
+
+        paths:
+          api/oidc-users/{subject-identifier}:
+            put:
+              parameters:
+                - in: path
+                  name: subject-identifier
+                  schema:
+                    type: string
+                  required: true
+                  description: The subject identifier of the user to update
+              responses:
+                "200":
+                  description: OK
+                  content:
+                    application/json:
+                      schema:
+                        properties:
+                          sub:
+                            type: string
+                          email:
+                            type: string
+                          email_verified:
+                            type: boolean
+                        required:
+                          - sub
+                          - email
+                          - email_verified
+              x-amazon-apigateway-integration:
+                httpMethod: PUT
+                responses:
+                  default:
+                    statusCode: "200"
+                    responseTemplates:
+                      application/json: >
+                        { "sub": "$input.params().path.subject-identifier", "email": "user@example.com", "email_verified": true }
+                requestTemplates:
+                  application/json: "{\"statusCode\": 204}"
+                passthroughBehavior: never
+                type: mock
+            delete:
+              parameters:
+                - in: path
+                  name: subject-identifier
+                  schema:
+                    type: string
+                  required: true
+                  description: The subject identifier of the user to delete
+              responses:
+                "204":
+                  description: No Content
+              x-amazon-apigateway-integration:
+                httpMethod: DELETE
+                responses:
+                  default:
+                    statusCode: "204"
+                requestTemplates:
+                  application/json: "{\"statusCode\": 204}"
+                passthroughBehavior: never
+                type: mock
+      EndpointConfiguration:
+        Type: REGIONAL
+  ApiAccessLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub /aws/apigateway/AccessLog-MockAPIGateway/${Environment}
+      RetentionInDays: 30
+
+
+Outputs:
+  MockPublishingApiSEndpoint:
+    Description: "The http url of the mock publishing API endpoint"
+    Value: !Sub "https://${MockPublishingApi}.execute-api.${AWS::Region}.amazonaws.com/${Environment}"
