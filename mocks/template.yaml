@@ -66,8 +66,16 @@ Resources:
         paths:
           api/oidc-users/{subject-identifier}:
             put:
+              description: >
+                Update an account and its email subscriptions by subject identifier
+              parameters:
+                - in: path
+                  name: subject-identifier
+                  description: The subject identifier of the user to update
+                  required: true
+                  schema:
+                    type: string
               requestBody:
-                description: The request body
                 required: true
                 content:
                   application/json:
@@ -77,15 +85,17 @@ Resources:
                         email:
                           type: string
                           format: email
+                        email_verified:
+                          type: boolean
+                        has_unconfirmed_email:
+                          type: boolean
+                        legacy_sub:
+                          type: string
                       required:
                         - email
-              parameters:
-                - in: path
-                  name: subject-identifier
-                  description: The subject identifier of the user to update
-                  required: true
-                  schema:
-                    type: string
+                        - email_verified
+                        - has_unconfirmed_email
+                        - legacy_sub
               responses:
                 "200":
                   description: OK
@@ -112,7 +122,7 @@ Resources:
                     responseTemplates:
                       application/json: >
                         #set($body = $context.requestOverride.path.body)
-                        { "sub": "$input.params().path.subject-identifier", "email": "$util.parseJson($body).email", "email_verified": true }
+                        { "sub": "$input.params().path.subject-identifier", "email": "$util.parseJson($body).email", "email_verified": "$util.parseJson($body).email_verified" }
                 requestTemplates:
                   application/json: >
                     #set($context.requestOverride.path.body = $input.body)
@@ -122,13 +132,21 @@ Resources:
                 passthroughBehavior: never
                 type: mock
             delete:
+              decription: >
+                Delete an account by subject identifier
               parameters:
                 - in: path
                   name: subject-identifier
+                  description: The subject identifier of the user to delete
+                  required: true
                   schema:
                     type: string
-                  required: true
-                  description: The subject identifier of the user to delete
+                - in: query
+                  name: legacy_sub
+                  description: If this is a user created pre-migration, their original subject identifier
+                  required: false
+                  schema:
+                    type: string
               responses:
                 "204":
                   description: No Content
