@@ -1,0 +1,55 @@
+AWSTemplateFormatVersion: "2010-09-09"
+
+Description: >-
+  CloudWatch Dashboard and Metrics
+Parameters:
+  Environment:
+    Description: The name of the environment to deploy to
+    Type: String
+    AllowedValues:
+      - dev
+      - build
+      - staging
+      - integration
+      - production
+
+  AAMStackName:
+    Description: The name of the Authentication Account Management Front-end Application
+    Type: String
+    Default: account-mgmt-frontend
+
+Resources:
+
+  ApiGatewayLatency:
+    Type: AWS::CloudWatch::Dashboard
+    Properties:
+      DashboardBody: '{
+	"start": "-PT6H",
+	"periodOverride": "inherit",
+	"widgets": [{
+			"type": "metric",
+			"x": 0,
+			"y": 0,
+			"width": 12,
+			"height": 6,
+			"properties": {
+				"metrics": [
+					[
+						"AWS/ApiGateway",
+						"Latency",
+						"ApiId",
+						"{"Fn::Sub":"{{resolve:ssm:/${AAMStackName}/ApiGateway/ID}"}"
+					]
+				],
+				"period": 300,
+				"stat": "SampleCount",
+				"region":{"Fn::Ref":"${AWS::Region}"},
+				"title": "API Gateway Latency",
+				"liveData": false,
+				"legend": {
+					"position": "right"
+				}
+		},
+		}
+	]}'
+      DashboardName: !Sub "${AWS::StackName}-ApiGatewayLatency"
