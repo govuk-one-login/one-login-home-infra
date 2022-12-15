@@ -25,68 +25,56 @@ Resources:
       DashboardBody:
         Fn::Sub: >
           {
-          	"start": "-PT6H",
-          	"periodOverride": "inherit",
-          	"widgets": [{
-          			"type": "metric",
-          			"x": 0,
-          			"y": 0,
-          			"width": 12,
-          			"height": 6,
-          			"properties": {
-          				"metrics": [
-          					[
-          						"AWS/ApiGateway",
-          						"4xxError",
-          						"ApiId",
-          						"${AAMApiGatewayId}"
-          					],
-          					[
-          						"AWS/ApiGateway",
-          						"5xxError",
-          						"ApiId",
-          						"${AAMApiGatewayId}"
-          					]
-          				],
-          				"period": 300,
-          				"stat": "SampleCount",
-          				"region": "${AWS::Region}",
-          				"title": "API Gateway 4xx and 5xx Errors",
-          				"liveData": false,
-          				"legend": {
-          					"position": "right"
-          				}
-          			}
-          		},
-          		{
-          			"start": "-PT6H",
-          			"periodOverride": "inherit",
-          			"widgets": [{
-          				"type": "metric",
-          				"x": 0,
-          				"y": 0,
-          				"width": 12,
-          				"height": 6,
-          				"properties": {
-          					"metrics": [
-          						[
-          							"AWS/ApiGateway",
-          							"Latency",
-          							"ApiId",
-          							"${AAMApiGatewayId}"
-          						]
-          					],
-          					"period": 300,
-          					"stat": "SampleCount",
-          					"region": "${AWS::Region}",
-          					"title": "API Gateway Latency",
-          					"liveData": false,
-          					"legend": {
-          						"position": "right"
-          					}
-          				}
-          			}]
-          		}
-          	]
+            "start": "-PT6H",
+            "periodOverride": "inherit",
+            "widgets": [{
+              "height": 6,
+              "width": 12,
+              "y": 0,
+              "x": 0,
+              "type": "metric",
+              "properties": {
+                "title": "API Gateway 4xx and 5xx Errors",
+                "region": "${AWS::Region}",
+                "metrics": [
+                  [
+                      "AWS/ApiGateway",
+                      "4xx",
+                      "ApiId",
+                      "${AAMApiGatewayId}"
+                  ],
+                  [
+                      "AWS/ApiGateway",
+                      "5xx",
+                      "ApiId",
+                      "${AAMApiGatewayId}"
+                  ]
+                ],
+                "view": "timeSeries",
+                "stacked": false
+              }
+            },
+              {
+                "height": 6,
+                "width": 12,
+                "y": 0,
+                "x": 12,
+                "type": "metric",
+                "properties": {
+                  "title": "API Gateway Latency",
+                  "region": "${AWS::Region}",
+                  "metrics": [
+                    [
+                        "AWS/ApiGateway",
+                        "Latency",
+                        "ApiId",
+                        "${AAMApiGatewayId}"
+                    ]
+                  ],
+                  "view": "timeSeries",
+                  "stacked": false
+                }
+              }
+            ]
           }
       DashboardName: !Sub "${AWS::StackName}-AAMFrontendApplication"
