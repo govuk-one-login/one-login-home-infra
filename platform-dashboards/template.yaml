@@ -16,6 +16,10 @@ Parameters:
     Type: AWS::SSM::Parameter::Value<String>
     Description: The Authentication Account Management Api Gateway ID
     Default: "/account-mgmt-frontend/ApiGateway/ID"
+  AAMECSServiceName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: The Authentication Account Management ECS Service Name
+    Default: "/account-mgmt-frontend/ECS/Service/Name"
 
 Resources:
 
@@ -25,56 +29,95 @@ Resources:
       DashboardBody:
         Fn::Sub: >
           {
-            "start": "-PT6H",
-            "periodOverride": "inherit",
-            "widgets": [{
-              "height": 6,
-              "width": 12,
-              "y": 0,
-              "x": 0,
-              "type": "metric",
-              "properties": {
-                "title": "API Gateway 4xx and 5xx Errors",
-                "region": "${AWS::Region}",
-                "metrics": [
-                  [
-                      "AWS/ApiGateway",
-                      "4xx",
-                      "ApiId",
-                      "${AAMApiGatewayId}"
-                  ],
-                  [
-                      "AWS/ApiGateway",
-                      "5xx",
-                      "ApiId",
-                      "${AAMApiGatewayId}"
-                  ]
-                ],
-                "view": "timeSeries",
-                "stacked": false
-              }
-            },
-              {
-                "height": 6,
-                "width": 12,
-                "y": 0,
-                "x": 12,
-                "type": "metric",
-                "properties": {
-                  "title": "API Gateway Latency",
-                  "region": "${AWS::Region}",
-                  "metrics": [
-                    [
-                        "AWS/ApiGateway",
-                        "Latency",
-                        "ApiId",
-                        "${AAMApiGatewayId}"
-                    ]
-                  ],
-                  "view": "timeSeries",
-                  "stacked": false
-                }
-              }
-            ]
+          	"start": "-PT6H",
+          	"periodOverride": "inherit",
+          	"widgets": [{
+          			"height": 6,
+          			"width": 12,
+          			"y": 0,
+          			"x": 0,
+          			"type": "metric",
+          			"properties": {
+          				"title": "API Gateway 4xx and 5xx Errors",
+          				"region": "${AWS::Region}",
+          				"metrics": [
+          					[
+          						"AWS/ApiGateway",
+          						"4xx",
+          						"ApiId",
+          						"${AAMApiGatewayId}"
+          					],
+          					[
+          						"AWS/ApiGateway",
+          						"5xx",
+          						"ApiId",
+          						"${AAMApiGatewayId}"
+          					]
+          				],
+          				"view": "timeSeries",
+          				"stacked": false,
+          				"stat": "Sum",
+          				"period": 60
+          			}
+          		},
+          		{
+          			"height": 6,
+          			"width": 12,
+          			"y": 0,
+          			"x": 12,
+          			"type": "metric",
+          			"properties": {
+          				"title": "API Gateway Latency",
+          				"region": "${AWS::Region}",
+          				"metrics": [
+          					[
+          						"AWS/ApiGateway",
+          						"Latency",
+          						"ApiId",
+          						"${AAMApiGatewayId}"
+          					]
+          				],
+          				"view": "timeSeries",
+          				"stacked": false,
+          				"stat": "Maximum",
+          				"period": 60
+          			}
+          		},
+          		{
+          			"height": 6,
+          			"width": 12,
+          			"y": 0,
+          			"x": 12,
+          			"type": "metric",
+          			"properties": {
+          				"title": "ECS Auto Scaling (Production Only)",
+          				"region": "${AWS::Region}",
+          				"metrics": [
+          					[
+          						"AWS/ApiGateway",
+          						"Count",
+          						"ApiId",
+          						"${AAMApiGatewayId}"
+          					],
+                            [
+                              "AWS/ECS",
+                              "CPUUtilization",
+                              "ClusterName",
+                              "${AAMECSServiceName}"
+                            ],
+                            [
+                              "AWS/ECS",
+                              "MemoryUtilization",
+                              "ClusterName",
+                              "${AAMECSServiceName}"
+                            ]
+          				],
+          				"view": "timeSeries",
+          				"stacked": false,
+          				"stat": "Maximum",
+          				"period": 60
+          			}
+          		}
+          	]
           }
       DashboardName: !Sub "${AWS::StackName}-AAMFrontendApplication"
