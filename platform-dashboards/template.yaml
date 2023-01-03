@@ -13,7 +13,7 @@ Parameters:
       - integration
       - production
   AAMApiGatewayId:
-    Type: AWS::SSM::Parameter::Value<String>
+    Type: AWS::SSM::Parameter::Name
     Description: The Authentication Account Management Api Gateway ID
     Default: !Ref APIGatewayIDParameter
   AAMECSServiceName:
