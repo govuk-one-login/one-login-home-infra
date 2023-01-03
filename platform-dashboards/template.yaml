@@ -15,11 +15,11 @@ Parameters:
   AAMApiGatewayId:
     Type: AWS::SSM::Parameter::Value<String>
     Description: The Authentication Account Management Api Gateway ID
-    Default: "/account-mgmt-frontend/ApiGateway/ID"
+    Default: !Ref APIGatewayIDParameter
   AAMECSServiceName:
     Type: AWS::SSM::Parameter::Value<String>
     Description: The Authentication Account Management ECS Service Name
-    Default: "/account-mgmt-frontend/ECS/Service/Name"
+    Default: !Ref ECSServiceNameParameter
 
 Resources:
 
