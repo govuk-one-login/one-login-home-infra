@@ -13,13 +13,14 @@ Parameters:
       - integration
       - production
   AAMApiGatewayId:
-    Type: AWS::SSM::Parameter::Name
+    Type: AWS::SSM::Parameter::Value<String>
     Description: The Authentication Account Management Api Gateway ID
-    Default: !Ref APIGatewayIDParameter
+    Default: /account-mgmt-frontend/ApiGateway/ID
+
   AAMECSServiceName:
     Type: AWS::SSM::Parameter::Value<String>
     Description: The Authentication Account Management ECS Service Name
-    Default: !Ref ECSServiceNameParameter
+    Default: /account-mgmt-frontend/ECS/Service/Name
 
 Resources:
 
@@ -38,7 +39,7 @@ Resources:
           			"x": 0,
           			"type": "metric",
           			"properties": {
-          				"title": "API Gateway 4xx and 5xx Errors",
+          				"title": "API Gateway 4xx, 5xx Errors and Total Invocations",
           				"region": "${AWS::Region}",
           				"metrics": [
           					[
@@ -52,7 +53,13 @@ Resources:
           						"5xx",
           						"ApiId",
           						"${AAMApiGatewayId}"
-          					]
+          					],
+                            [
+                              "AWS/ApiGateway",
+                              "Count",
+                              "ApiId",
+                              "${AAMApiGatewayId}"
+                            ]
           				],
           				"view": "timeSeries",
           				"stacked": false,
@@ -99,18 +106,18 @@ Resources:
           						"ApiId",
           						"${AAMApiGatewayId}"
           					],
-                            [
-                              "AWS/ECS",
-                              "CPUUtilization",
-                              "ClusterName",
-                              "${AAMECSServiceName}"
-                            ],
-                            [
-                              "AWS/ECS",
-                              "MemoryUtilization",
-                              "ClusterName",
-                              "${AAMECSServiceName}"
-                            ]
+          					[
+          						"AWS/ECS",
+          						"CPUUtilization",
+          						"ClusterName",
+          						"${AAMECSServiceName}"
+          					],
+          					[
+          						"AWS/ECS",
+          						"MemoryUtilization",
+          						"ClusterName",
+          						"${AAMECSServiceName}"
+          					]
           				],
           				"view": "timeSeries",
           				"stacked": false,
