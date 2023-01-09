@@ -11,6 +11,10 @@ Parameters:
     AllowedValues:
       - "dev"
       - "build"
+  VpcStackName:
+    Description: The name of the stack that defines the VPC
+    Type: String
+    Default: "vpc-enhanced"
   ProductTagValue:
     Description: Value for the Product Tag
     Type: String
@@ -32,6 +36,7 @@ Resources:
   MockPublishingAPI:
     Type: AWS::Serverless::Api
     Properties:
+      # checkov:skip=CKV_AWS_120: Ensure API Gateway caching is enabled
       MethodSettings:
         - LoggingLevel: INFO
           ResourcePath: '/*'
@@ -44,7 +49,7 @@ Resources:
         DestinationArn: !GetAtt MockPublishingAPIAccessLogGroup.Arn
         Format: '{ "requestTime":"$context.requestTime", "requestId":"$context.requestId", "httpMethod":"$context.httpMethod", "path": "$context.path", "resourcePath":"$context.resourcePath", "status":"$context.status", "responseLength":"$context.responseLength", "responseLatency": $context.responseLatency, "xrayTraceId": "$context.xrayTraceId", "ip": "$context.identity.sourceIp", "caller":"$context.identity.caller", "user":"$context.identity.user" }'
       TracingEnabled: true
-      Name: !Sub "/${Environment}/MockPublishingAPI"
+      Name: mock-publishing-api
       StageName: !Ref Environment
       OpenApiVersion: 3.0.1
       DefinitionBody:
@@ -75,12 +80,14 @@ Resources:
                   required: true
                   schema:
                     type: string
+                    additionalProperties: false
               requestBody:
                 required: true
                 content:
                   application/json:
                     schema:
                       type: object
+                      additionalProperties: false
                       properties:
                         email:
                           type: string
@@ -91,17 +98,19 @@ Resources:
                           type: boolean
                         legacy_sub:
                           type: string
-                      required:
-                        - email
-                        - email_verified
-                        - has_unconfirmed_email
-                        - legacy_sub
+#                      required:
+#                        - email
+#                        - email_verified
+#                        - has_unconfirmed_email
+#                        - legacy_sub
               responses:
                 "200":
                   description: OK
                   content:
                     application/json:
                       schema:
+                        type: object
+                        additionalProperties: false
                         properties:
                           sub:
                             type: string
@@ -115,6 +124,10 @@ Resources:
                           - email
                           - email_verified
               x-amazon-apigateway-integration:
+#                connectionId:
+#                  Fn::ImportValue:
+#                    !Sub "${VpcStackName}-VpcLinkId"
+#                connectionType: VPC_LINK
                 httpMethod: PUT
                 responses:
                   default:
@@ -129,28 +142,34 @@ Resources:
                     {
                         "statusCode": 200
                     }
-                passthroughBehavior: never
+                passthroughBehavior: when_no_match
                 type: mock
             delete:
               decription: >
                 Delete an account by subject identifier
               parameters:
-                - in: path
-                  name: subject-identifier
-                  description: The subject identifier of the user to delete
-                  required: true
-                  schema:
-                    type: string
                 - in: query
                   name: legacy_sub
                   description: If this is a user created pre-migration, their original subject identifier
                   required: false
                   schema:
                     type: string
+                    additionalProperties: false
+                - in: path
+                  name: subject-identifier
+                  description: The subject identifier of the user to delete
+                  required: true
+                  schema:
+                    type: string
+                    additionalProperties: false
               responses:
                 "204":
                   description: No Content
               x-amazon-apigateway-integration:
+#                connectionId:
+#                  Fn::ImportValue:
+#                    !Sub "${VpcStackName}-VpcLinkId"
+#                connectionType: VPC_LINK
                 httpMethod: DELETE
                 responses:
                   default:
@@ -160,7 +179,7 @@ Resources:
                     {
                         "statusCode": 204
                     }
-                passthroughBehavior: never
+                passthroughBehavior: when_no_match
                 type: mock
       EndpointConfiguration:
         Type: REGIONAL
@@ -170,12 +189,14 @@ Resources:
         Environment: !Ref Environment
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
+        CheckovRulesToSkip: CKV_AWS_120
 
   MockPublishingAPIAccessLogGroup:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "/aws/apigateway/mock-publishing-api-access-logs/${Environment}"
-      RetentionInDays: 30
+      RetentionInDays: 14
+      KmsKeyId: !GetAtt SecretsEncryptionKMSKey.Arn
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -187,6 +208,36 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
+    
+  SecretsEncryptionKMSKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-SecretsEncryptionKMSKey"
+      TargetKeyId: !Ref SecretsEncryptionKMSKey
+
+  SecretsEncryptionKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: >
+        KMS key used to protect secret configuration values used across the platform.
+        Required by roles who need to update config values.
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: !Sub "logs.amazonaws.com"
+            Action:
+              - "kms:*"
+            Resource: "*"
 
   MockPublishingAPIEndpointParameter:
     Type: AWS::SSM::Parameter
