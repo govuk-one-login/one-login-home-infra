@@ -22,6 +22,11 @@ Parameters:
     Description: The Authentication Account Management ECS Service Name
     Default: /account-mgmt-frontend/ECS/Service/Name
 
+  AAMECSClusterName:
+    Type: AWS::SSM::Parameter::Value<String>
+    Description: The Authentication Account Management ECS Cluster Name
+    Default: /account-mgmt-frontend/ECS/Cluster
+
 Resources:
 
   AAMFrontendApplication:
@@ -30,101 +35,67 @@ Resources:
       DashboardBody:
         Fn::Sub: >
           {
-          	"start": "-PT6H",
-          	"periodOverride": "inherit",
-          	"widgets": [{
-          			"height": 6,
-          			"width": 12,
-          			"y": 0,
-          			"x": 0,
-          			"type": "metric",
-          			"properties": {
-          				"title": "API Gateway 4xx, 5xx Errors and Total Invocations",
-          				"region": "${AWS::Region}",
-          				"metrics": [
-          					[
-          						"AWS/ApiGateway",
-          						"4xx",
-          						"ApiId",
-          						"${AAMApiGatewayId}"
-          					],
-          					[
-          						"AWS/ApiGateway",
-          						"5xx",
-          						"ApiId",
-          						"${AAMApiGatewayId}"
-          					],
-                            [
-                              "AWS/ApiGateway",
-                              "Count",
-                              "ApiId",
-                              "${AAMApiGatewayId}"
-                            ]
-          				],
-          				"view": "timeSeries",
-          				"stacked": false,
-          				"stat": "Sum",
-          				"period": 60
-          			}
-          		},
-          		{
-          			"height": 6,
-          			"width": 12,
-          			"y": 0,
-          			"x": 12,
-          			"type": "metric",
-          			"properties": {
-          				"title": "API Gateway Latency",
-          				"region": "${AWS::Region}",
-          				"metrics": [
-          					[
-          						"AWS/ApiGateway",
-          						"Latency",
-          						"ApiId",
-          						"${AAMApiGatewayId}"
-          					]
-          				],
-          				"view": "timeSeries",
-          				"stacked": false,
-          				"stat": "Maximum",
-          				"period": 60
-          			}
-          		},
-          		{
-          			"height": 6,
-          			"width": 12,
-          			"y": 0,
-          			"x": 12,
-          			"type": "metric",
-          			"properties": {
-          				"title": "ECS Auto Scaling (Production Only)",
-          				"region": "${AWS::Region}",
-          				"metrics": [
-          					[
-          						"AWS/ApiGateway",
-          						"Count",
-          						"ApiId",
-          						"${AAMApiGatewayId}"
-          					],
-          					[
-          						"AWS/ECS",
-          						"CPUUtilization",
-          						"ServiceName",
-          						"${AAMECSServiceName}"
-          					],
-          					[
-          						"AWS/ECS",
-          						"MemoryUtilization",
-          						"ServiceName",
-          						"${AAMECSServiceName}"
-          					]
-          				],
-          				"view": "timeSeries",
-          				"stacked": false,
-          				"stat": "Maximum",
-          				"period": 60
-          			}
-          		}
-          	]
+              "start": "-PT6H",
+              "periodOverride": "inherit",
+              "widgets": [
+                  {
+                      "height": 6,
+                      "width": 12,
+                      "y": 0,
+                      "x": 0,
+                      "type": "metric",
+                      "properties": {
+                          "title": "API Gateway 4xx, 5xx Errors and Total Invocations",
+                          "region": "eu-west-2",
+                          "metrics": [
+                              [ "AWS/ApiGateway", "4xx", "ApiId","${AAMApiGatewayId}" ],
+                              [ "AWS/ApiGateway", "5xx", "ApiId", "${AAMApiGatewayId}" ],
+                              [ "AWS/ApiGateway", "Count", "ApiId", "${AAMApiGatewayId}"]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "stat": "Sum",
+                          "period": 60
+                      }
+                  },
+                  {
+                      "height": 6,
+                      "width": 12,
+                      "y": 0,
+                      "x": 12,
+                      "type": "metric",
+                      "properties": {
+                          "title": "API Gateway Latency",
+                          "region": "eu-west-2",
+                          "metrics": [
+                              [ "AWS/ApiGateway", "Latency", "ApiId", "${AAMApiGatewayId}" ]
+                          ],
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "stat": "Maximum",
+                          "period": 60
+                      }
+                  },
+                  {
+                      "height": 6,
+                      "width": 12,
+                      "y": 6,
+                      "x": 12,
+                      "type": "metric",
+                      "properties": {
+                          "metrics": [
+                              [ "AWS/ApiGateway", "Count", "ApiId", "${AAMApiGatewayId}", { "stat": "Sum" } ],
+                              [ "AWS/ECS", "CPUUtilization", "ClusterName", "${AAMECSClusterName}", "ServiceName", "${AAMECSServiceName}" ],
+                              [ ".", "MemoryUtilization", ".", ".", ".", "." ]
+                          ],
+                          "title": "ECS Auto Scaling (Production Only)",
+                          "region": "eu-west-2",
+                          "view": "timeSeries",
+                          "stacked": false,
+                          "stat": "Maximum",
+                          "period": 60
+                      }
+                  }
+              ]
           }
       DashboardName: !Sub "${AWS::StackName}-AAMFrontendApplication"
