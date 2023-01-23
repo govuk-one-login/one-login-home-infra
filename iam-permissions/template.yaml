@@ -36,7 +36,8 @@ Parameters:
 Resources:
   ControlTowerRole:
     Type: AWS::IAM::Role
-    Properties: 
+    Properties:
+      # checkov:skip=CKV_AWS_61: Ensure AWS IAM policy does not allow to assume role permission across all services.
       AssumeRolePolicyDocument:
         Version: "2012-10-17"
         Statement:
@@ -47,7 +48,7 @@ Resources:
             Action:
               - 'sts:AssumeRole'
 
-      ManagedPolicyArns: 
+      ManagedPolicyArns:
         - arn:aws:iam::aws:policy/AdministratorAccess
       RoleName: AWSControlTowerExecution
       Tags:
@@ -61,3 +62,5 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
+        - Key: CheckovRulesToSkip
+          Value: CKV_AWS_61

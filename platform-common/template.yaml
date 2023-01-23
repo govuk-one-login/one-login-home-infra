@@ -33,13 +33,6 @@ Parameters:
     Type: String
     Default: alphagov/di-accounts-infra/platform-common/template.yaml
 
-Conditions:
-  IsNotDevelopment: !Or
-    - !Equals [ !Ref Environment, build ]
-    - !Equals [ !Ref Environment, staging ]
-    - !Equals [ !Ref Environment, integration ]
-    - !Equals [ !Ref Environment, production ]
-
 Resources:
   #
   # SSM Parameter
@@ -97,7 +90,7 @@ Resources:
   GrafanaApiKey:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "pipeline-grafana-api-key"
+      Name: "pipeline-grafana-api-key"
       Description: "Accounts - Grafana API Key"
       SecretString: "placeholder-value"
       KmsKeyId: !Ref SecretsEncryptionKMSKeyAlias
@@ -134,7 +127,7 @@ Resources:
             Resource: "*"
           - Effect: Allow
             Principal:
-              Service: !Sub "secretsmanager.amazonaws.com"
+              Service: "secretsmanager.amazonaws.com"
             Action:
               - "kms:*"
             Resource: "*"

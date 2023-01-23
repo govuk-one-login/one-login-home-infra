@@ -1,11 +1,11 @@
 AWSTemplateFormatVersion: '2010-09-09'
 
 Description: >
-  Sets up prerequisite resources and placeholders used by the Authentication Account Management (AAM) webapp. 
+  Sets up prerequisite resources and placeholders used by the Authentication Account Management (AAM) webapp.
   The KMS key's Public key is the AAM webapp server's Client Secret.
   The KMS key used for signing JWTs so that OP can authenticate the RP (runtime dependency).
-  The stack also create SSM Parameters and Secrets placeholder resources.  
-  These placeholder resources are for storing config values used when the account-mgmt-frontend Cfn stack is 
+  The stack also create SSM Parameters and Secrets placeholder resources.
+  These placeholder resources are for storing config values used when the account-mgmt-frontend Cfn stack is
   deployed (deploy-time dependencies).
 
 Parameters:
@@ -49,20 +49,6 @@ Parameters:
     Description: Value for the Source Tag
     Type: String
     Default: alphagov/di-accounts-infra/account-mgmt-frontend-seed/template.yaml
-
-  # TODO enforce
-  PermissionsBoundary:
-    Type: String
-    Description: >
-      The ARN of the permissions boundary to apply to any role created by the template
-    Default: none
-
-Conditions:
-  UsePermissionsBoundary:
-    Fn::Not:
-      - Fn::Equals:
-          - !Ref PermissionsBoundary
-          - "none"
 
 Resources:
   JwtSigningKey:
@@ -200,9 +186,12 @@ Resources:
   SecretsEncryptionKMSKey:
     Type: AWS::KMS::Key
     Properties:
-      Description: >
-        !Sub KMS key used to protect secret configuration values for ${AAMStackName}.
-        Required by roles who need to update config values and deploy the stack called ${AAMStackName}.
+      Description:
+        !Sub
+        - >
+          KMS key used to protect secret configuration values for ${AAMStackName}.
+          Required by roles who need to update config values and deploy the stack called ${AAMStackName}.
+        - {AAMStackName: !Ref AAMStackName}
       Enabled: true
       EnableKeyRotation: true
       KeyPolicy:
