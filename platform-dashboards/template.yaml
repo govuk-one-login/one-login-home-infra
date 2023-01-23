@@ -1,7 +1,7 @@
 AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >-
-  CloudWatch Dashboard and Metrics
+  This template creates CloudWatch Dashboards for service metrics under Accounts.gov.uk
 Parameters:
   Environment:
     Description: The name of the environment to deploy to
@@ -14,22 +14,22 @@ Parameters:
       - production
   AAMApiGatewayId:
     Type: AWS::SSM::Parameter::Value<String>
-    Description: The Authentication Account Management Api Gateway ID
+    Description: The Account Management Frontend Api Gateway ID
     Default: /account-mgmt-frontend/ApiGateway/ID
 
   AAMECSServiceName:
     Type: AWS::SSM::Parameter::Value<String>
-    Description: The Authentication Account Management ECS Service Name
+    Description: The Account Management Frontend ECS Service Name
     Default: /account-mgmt-frontend/ECS/Service/Name
 
   AAMECSClusterName:
     Type: AWS::SSM::Parameter::Value<String>
-    Description: The Authentication Account Management ECS Cluster Name
+    Description: The Account Management Frontend ECS Cluster Name
     Default: /account-mgmt-frontend/ECS/Cluster
 
 Resources:
 
-  AAMFrontendApplication:
+  AMFCloudWatchDashboard:
     Type: AWS::CloudWatch::Dashboard
     Properties:
       DashboardBody:
@@ -98,4 +98,4 @@ Resources:
                   }
               ]
           }
-      DashboardName: !Sub "${AWS::StackName}-AAMFrontendApplication"
+      DashboardName: !Sub "${AWS::StackName}-AMF"
