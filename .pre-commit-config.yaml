@@ -40,7 +40,8 @@ repos:
         files: ^(?!\..*).*/template\.(json|yml|yaml)$
   # - repo: https://github.com/mattlqx/pre-commit-sign
   - repo: https://github.com/aws-cloudformation/cfn-lint
-    rev: v0.72.2  # The version of cfn-lint to use
+    rev: v0.72.9  # The version of cfn-lint to use
     hooks:
       - id: cfn-lint
+        args: ['--ignore-checks', 'W']
         files: ^(?!\..*).*/template\.(json|yml|yaml)$

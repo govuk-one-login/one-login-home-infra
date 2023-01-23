@@ -1,4 +1,12 @@
 {
+  "name": "di-accounts-infra",
+  "version": "1.0.0",
+  "main": "index.js",
+  "repository": "git@github.com:alphagov/di-accounts-infra.git",
+  "author": "",
+  "license": "ISC",
+  "scripts": {
+  },
   "devDependencies": {
     "pre-commit": "^1.2.2"
   }
