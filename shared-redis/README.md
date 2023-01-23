@@ -4,8 +4,8 @@
 The CloudFormation template creates the prerequisite Redis Cache resources used by
 the applications like Authentication Account Management (AAM) webapp.
 
-Creates a cluster mode __**disabled**__ ElastiCache Redis Cluster. 
-Cache nodes are deployed into the private subnets A & B. 
+Creates a cluster mode __**disabled**__ ElastiCache Redis Cluster.
+Cache nodes are deployed into the private subnets A & B.
 Accessible from VPC networked resources within the Protected and Private subnets only.
 
 This Stack is deployed manually once per account/environment as part of the AAM prerequisite set up process.
@@ -31,7 +31,7 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ### Updating an Existing Stack
 Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in the commands below.
 ```bash
-gds-cli aws di-account-build-admin \ 
+gds-cli aws di-account-build-admin \
 aws cloudformation update-stack --stack-name shared-redis \
 --template-body file://$(pwd)/shared-redis/template.yaml \
 --region eu-west-2 --capabilities CAPABILITY_NAMED_IAM CAPABILITY_AUTO_EXPAND \

@@ -36,7 +36,7 @@ Parameters:
     Default: alphagov/di-accounts-infra/platform-global-resources/template.yaml
 
 Conditions:
-  IsExternal: !Or 
+  IsExternal: !Or
     - !Equals [ !Ref Environment, production ]
     - !Equals [ !Ref Environment, integration ]
   IsInternal: !Or

@@ -1,19 +1,19 @@
-# Accounts - Authentication Account Management (AAM) - Seed Stack
+# Accounts - Authentication Account Management (AMF) - Seed Stack
 
 ## Intro
-The CloudFormation template creates the prerequisite resources and placeholders used by 
-the Authentication Account Management (AAM) webapp, which haa default stack name of `account-mgmt-frontend`.
+The CloudFormation template creates the prerequisite resources and placeholders used by
+the Authentication Account Management (AMF) webapp, which haa default stack name of `account-mgmt-frontend`.
 
-This Stack is deployed manually once per account/environment as part of the AAM prerequisite set up process.
+This Stack is deployed manually once per account/environment as part of the AMF prerequisite set up process.
 
 ### KMS Key
-The KMS key's Public key is the AAM webapp server's Client Secret and needs to be securely sent to the OP.
+The KMS key's Public key is the AMF webapp server's Client Secret and needs to be securely sent to the OP.
 The KMS key is used for signing JWTs so that OP can authenticate the RP (__runtime dependency__).
 
 __N.B.__ the KMS key created by this template is retained even when the Stack is deleted.
 
 ### Config Placeholders
-The stack also create SSM Parameters and Secrets placeholder resources. 
+The stack also create SSM Parameters and Secrets placeholder resources.
 These placeholder resources are for storing config values used when the `account-mgmt-frontend` CloudFormation
 stack is deployed (__deploy-time dependency__).
 
@@ -25,7 +25,7 @@ To deploy the template to the appropriate AWS account, ensure you are at the roo
 #### Step 1
 
 ##### Stack Parameters
- - `AAMStackName` - The intended name of the AAM SAM Stack, defaults to `account-mgmt-frontend`.
+ - `AAMStackName` - The intended name of the AMF SAM Stack, defaults to `account-mgmt-frontend`.
 
 Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in the commands below.
 ```bash
@@ -41,7 +41,7 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 #### Step 2
 Get the KMS Key's Public Key and send it to the OP for registration of the RP.
 
- - Go to the AWS Console and open the Key Management Service (KMS). 
+ - Go to the AWS Console and open the Key Management Service (KMS).
  - Find key with Alias called `account-mgmt-frontend-JwtSigningKey` and select it.
  - Select the Public Key tab and copy the value.
  - **__Securely__** send the copied value to the OP to begin Client Registration.
@@ -51,15 +51,15 @@ Get the KMS Key's Public Key and send it to the OP for registration of the RP.
 Persist the following values into the placeholders in SSM Parameter store:
 
 | SSM Parameter Key                                    | Value Province                                 |
-|------------------------------------------------------|------------------------------------------------|   
-| `/account-mgmt-frontend/Config/OIDC/Client/Id` | Client ID returned by OP after RP registration | 
-| `/account-mgmt-frontend/Config/GTM/Id`         | Google Tag Manager ID                          | 
+|------------------------------------------------------|------------------------------------------------|
+| `/account-mgmt-frontend/Config/OIDC/Client/Id` | Client ID returned by OP after RP registration |
+| `/account-mgmt-frontend/Config/GTM/Id`         | Google Tag Manager ID                          |
 
-#### Step 4 
+#### Step 4
 Persist the following values into the placeholders in Secrets Manager Parameter store:
 
 | Secret Name                                              | Value Province                       |
-|----------------------------------------------------------|--------------------------------------|   
+|----------------------------------------------------------|--------------------------------------|
 | `/account-mgmt-frontend/Config/Publishing/API/Key` | GOV.UK Services - Publishing API Key |
 
 __N.B__ SecureString cannot be created with CloudFormation.

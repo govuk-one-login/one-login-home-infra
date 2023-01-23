@@ -5,11 +5,11 @@ The CloudFormation template creates an ACM Certificate for `<subdomain>.account.
 or `<subdomain>.<environment>.account.gov.uk` if environment is not `production`.
 
 This Stack is deployed manually once per account/environment as part of the DNS set up process.
-This stack should only be deployed **__after__** the 
-[di-infrastucture](https://github.com/alphagov/di-infrastructure/tree/main/terraform/domain) repo has been 
-deployed and a DNS lookup returns the nameservers for the domain. 
+This stack should only be deployed **__after__** the
+[di-infrastucture](https://github.com/alphagov/di-infrastructure/tree/main/terraform/domain) repo has been
+deployed and a DNS lookup returns the nameservers for the domain.
 
-This stack will create the SSL/TLS certificate for the subdomain.  
+This stack will create the SSL/TLS certificate for the subdomain.
 
 ### Domains
 The template creates Certificates for the following subdomain(s):
