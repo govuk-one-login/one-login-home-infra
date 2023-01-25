@@ -193,6 +193,8 @@ Resources:
         - "213.86.153.237/32"
         - "51.149.8.0/25"
         - "51.149.8.128/29"
+        - "18.134.83.120" # vpc-enhanced-NatGatewayZoneAEIP
+        - "18.134.219.201" # vpc-enhanced-NatGatewayZoneBEIP
       IPAddressVersion: IPV4
       Scope: CLOUDFRONT
       Tags:
