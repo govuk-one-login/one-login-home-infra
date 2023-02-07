@@ -62,6 +62,7 @@ Resources:
   # WAFv2 WebACL
   #
 
+
   WebACLInternal:
     Condition: IsInternal
     Type: AWS::WAFv2::WebACL
@@ -81,9 +82,9 @@ Resources:
             IPSetReferenceStatement:
               Arn: !GetAtt WAFv2GDSIPSet.Arn
           VisibilityConfig:
-            CloudWatchMetricsEnabled: TRUE
+            CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-WAFGDSIPhits"
-            SampledRequestsEnabled: FALSE
+            SampledRequestsEnabled: false
         - Name: AWS-AWMManagedRuleCommonRuleSet
           OverrideAction:
             Count: {}
@@ -93,9 +94,9 @@ Resources:
               Name: AWSManagedRulesCommonRuleSet
               VendorName: AWS
           VisibilityConfig:
-            CloudWatchMetricsEnabled: TRUE
+            CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-AWSCRShits"
-            SampledRequestsEnabled: FALSE
+            SampledRequestsEnabled: false
         - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet
           Priority: 30
           OverrideAction:
@@ -105,13 +106,13 @@ Resources:
               VendorName: AWS
               Name: AWSManagedRulesKnownBadInputsRuleSet
           VisibilityConfig:
-            CloudWatchMetricsEnabled: TRUE
+            CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-AWSKBIhits"
-            SampledRequestsEnabled: FALSE
+            SampledRequestsEnabled: false
       VisibilityConfig:
-        CloudWatchMetricsEnabled: TRUE
+        CloudWatchMetricsEnabled: true
         MetricName: !Sub "${AWS::StackName}-WAFv2hits"
-        SampledRequestsEnabled: FALSE
+        SampledRequestsEnabled: false
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -144,9 +145,9 @@ Resources:
               Name: AWSManagedRulesCommonRuleSet
               VendorName: AWS
           VisibilityConfig:
-            CloudWatchMetricsEnabled: TRUE
+            CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-AWSCRShits"
-            SampledRequestsEnabled: FALSE
+            SampledRequestsEnabled: false
         - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet
           Priority: 30
           OverrideAction:
@@ -156,13 +157,13 @@ Resources:
               VendorName: AWS
               Name: AWSManagedRulesKnownBadInputsRuleSet
           VisibilityConfig:
-            CloudWatchMetricsEnabled: TRUE
+            CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-AWSKBIhits"
-            SampledRequestsEnabled: FALSE
+            SampledRequestsEnabled: false
       VisibilityConfig:
-        CloudWatchMetricsEnabled: TRUE
+        CloudWatchMetricsEnabled: true
         MetricName: !Sub "${AWS::StackName}-WAFv2hits"
-        SampledRequestsEnabled: FALSE
+        SampledRequestsEnabled: false
       Tags:
         - Key: Product
           Value: !Ref ProductTagValue
@@ -208,6 +209,88 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
+
+  WebACLLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub "aws-waf-logs-${AWS::StackName}"
+      RetentionInDays: 1
+      KmsKeyId: !GetAtt WAFLoggingKmsKey.Arn
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: WebACLLogGroup
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  WebACLLogs:
+    Type: AWS::WAFv2::LoggingConfiguration
+    DependsOn: WebACLLogGroup
+    Properties:
+      LogDestinationConfigs:
+        - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${WebACLLogGroup}"
+      ResourceArn: !If [IsInternal, !GetAtt WebACLInternal.Arn, !GetAtt WebACLExternal.Arn]
+
+  WebACLLogGroupCSLSSubscription:
+    Type: AWS::Logs::SubscriptionFilter
+    Properties:
+      DestinationArn: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
+      FilterPattern: ""
+      LogGroupName: !Ref WebACLLogGroup
+
+  WAFLoggingKmsKey:
+    Type: AWS::KMS::Key
+    Properties:
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: 2012-10-17
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              Service: !Sub "logs.${AWS::Region}.amazonaws.com"
+            Action:
+              - "kms:Encrypt*"
+              - "kms:Decrypt*"
+              - "kms:ReEncrypt*"
+              - "kms:GenerateDataKey*"
+              - "kms:Describe*"
+            Resource:
+              - "*"
+            Condition:
+              ArnLike:
+                "kms:EncryptionContext:aws:logs:arn": !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:*"
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Name
+          Value: !Sub "${AWS::StackName}-WAFLoggingKmsKey"
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  WAFLoggingKmsKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-WAFLoggingKmsKey"
+      TargetKeyId: !GetAtt WAFLoggingKmsKey.Arn
 
   #
   # DNS Certificate
