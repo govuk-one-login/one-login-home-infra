@@ -52,6 +52,20 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
+  WebACLNameParameter:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Description: !Sub "The name of the ${AWS::StackName} WebACL"
+      Name: !Sub "/${AWS::StackName}/WebACL"
+      Type: String
+      Value: "platform-global-resources-WebACL"
+      Tags:
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Environment: !Ref Environment
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
   GlobalWAFACLARN:
     Type: AWS::SSM::Parameter
     Properties:
