@@ -50,6 +50,9 @@ Parameters:
     Type: String
     Default: alphagov/di-accounts-infra/account-mgmt-frontend-seed/template.yaml
 
+Conditions:
+  IsDevelopment: !Equals [!Ref Environment, dev]
+
 Resources:
   JwtSigningKey:
     Type: AWS::KMS::Key
@@ -95,7 +98,9 @@ Resources:
             - "*"
           Condition:
             StringLike:
-              aws:PrincipalArn: !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AAMStackName}-TaskRole'
+              aws:PrincipalArn:
+                - !Sub 'arn:aws:iam::${AWS::AccountId}:role/${AAMStackName}-TaskRole'
+                - !If [IsDevelopment, !Sub 'arn:aws:iam::${AWS::AccountId}:role/dev-*-${AAMStackName}-TaskRole', !Ref AWS::NoValue]
 
       Tags:
         - Key: Product
