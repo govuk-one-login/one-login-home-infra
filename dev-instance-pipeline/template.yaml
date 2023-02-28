@@ -2707,7 +2707,7 @@ Resources:
 
                     - |
                       inherited_tags="$(aws cloudformation describe-stacks \
-                        --stack-name dev-$ENVIRONMENT_NUMBER-${AWS::StackName} \
+                        --stack-name ${AWS::StackName} \
                         --query "Stacks[0].Tags[].[Key, Value]" \
                         --output text | awk '{ split($0, pairs, "\t"); print pairs[1]"=\""pairs[2]"\"" }' | tr "\n" " ")"
 
