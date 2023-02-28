@@ -2348,6 +2348,7 @@ Resources:
               - "elasticloadbalancing:DescribeTargetGroups"
               - "elasticloadbalancing:DescribeTargetGroupAttributes"
               - "elasticloadbalancing:DescribeTargetHealth"
+              - "elasticloadbalancing:DescribeTags"
               - "elasticloadbalancing:DescribeRules"
             Resource:
               - "*"
