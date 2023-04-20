@@ -42,7 +42,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/Users/OTPUsernameOne"
-      Description: "OTP Username secret used to run QA tests against the Account Management Frontend"
+      Description: "Users OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -61,7 +61,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/Users/OTPUsernameTwo"
-      Description: "OTP Username secret used to run QA tests against the Account Management Frontend"
+      Description: "Users OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -80,7 +80,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/KeyUser/UsernameOne"
-      Description: "OTP Username secret used to run QA tests against the Account Management Frontend"
+      Description: "Users OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -99,7 +99,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/Users/SMSUsernameOne"
-      Description: "SMS Username secret used to run QA tests against the Account Management Frontend"
+      Description: "Users SMS Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -118,7 +118,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/Users/DeleteOTPUsernameOne"
-      Description: "Delete OTP Username secret used to run QA tests against the Account Management Frontend"
+      Description: "Users Delete OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -213,7 +213,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/UkMobileNumber"
-      Description: "UK Mobile Number secret used to run QA tests against the Account Management Frontend"
+      Description: "UK Sign In Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -232,7 +232,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewUkMobileNumber"
-      Description: "New UK Mobile Number secret used to run QA tests against the Account Management Frontend"
+      Description: "New UK Sign In Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -251,7 +251,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InternationalMobileNumber"
-      Description: "International Mobile Number secret used to run QA tests against the Account Management Frontend"
+      Description: "International Sign In Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -270,7 +270,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewInternationalMobileNumber"
-      Description: "New International Mobile Number secret used to run QA tests against the Account Management Frontend"
+      Description: "New International Sign In Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -289,7 +289,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/DuplicateUkMobileNumber"
-      Description: "Duplicate UK Mobile Number secret used to run QA tests against the Account Management Frontend"
+      Description: "Duplicate UK Sign In Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -308,7 +308,7 @@ Resources:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/DuplicateInternationalMobileNumber"
-      Description: "Duplicate International Mobile Number secret used to run QA tests against the Account Management Frontend"
+      Description: "Duplicate International Sign In Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -326,8 +326,8 @@ Resources:
   SignInPasswordMismatchSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/SignInPasswordMismatch"
-      Description: "Sign In Password Mismatch Password parameter used to run QA tests against the Account Management Frontend"
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/PasswordMismatch"
+      Description: "Sign In Password Mismatch parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
@@ -337,11 +337,11 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
-  NewPasswordSSM:
+  SignInNewPasswordSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewPassword"
-      Description: "New Password parameter used to run QA tests against the Account Management Frontend"
+      Description: "New Sign In Password parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
@@ -351,11 +351,11 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
-  InvalidPasswordSSM:
+  SignInInvalidPasswordSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidPassword"
-      Description: "Invalid Password parameter used to run QA tests against the Account Management Frontend"
+      Description: "Invalid Sign In Password parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
@@ -365,11 +365,11 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
-  InvalidSecurityCodeSSM:
+  SignInInvalidSecurityCodeSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidSecurityCode"
-      Description: "Invalid Security Code parameter used to run QA tests against the Account Management Frontend"
+      Description: "Invalid Sign In Security Code parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
@@ -379,11 +379,11 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
-  IncorrectSecurityCodeSSM:
+  SignInIncorrectSecurityCodeSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/IncorrectSecurityCode"
-      Description: "Incorrect Security Code parameter used to run QA tests against the Account Management Frontend"
+      Description: "Incorrect Sign In Security Code parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
@@ -393,11 +393,11 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
-  InvalidUKMobileNumberSSM:
+  SignInInvalidUKMobileNumberSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidUkMobileNumber"
-      Description: "Invalid UK Mobile Number parameter used to run QA tests against the Account Management Frontend"
+      Description: "Invalid Sign In UK Mobile Number parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
@@ -407,11 +407,11 @@ Resources:
         Owner: !Ref OwnerTagValue
         Source: !Ref SourceTagValue
 
-  InvalidInternationalMobileNumberSSM:
+  SignInInvalidInternationalMobileNumberSSM:
     Type: AWS::SSM::Parameter
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidInternationalMobileNumber"
-      Description: "Invalid International Mobile Number parameter used to run QA tests against the Account Management Frontend"
+      Description: "Invalid Sign In International Mobile Number parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
