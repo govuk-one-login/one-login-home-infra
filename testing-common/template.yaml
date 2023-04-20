@@ -38,11 +38,11 @@ Resources:
   #
   # Secrets and SSM Parameters
   #
-  AuthenticatorOTPUsernameSecretOne:
+  OTPUsernameOneSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/tests/${AMFStackName}/Config/OTP/UsernameOne"
-      Description: "For setting the UsernameOne env var config value. This is the email address of the account holder."
+      Name: !Sub "/tests/${AMFStackName}/Config/Users/OTPUsernameOne"
+      Description: "OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -57,11 +57,11 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
-  AuthenticatorOTPUsernameSecretTwo:
+  OTPUsernameTwoSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/tests/${AMFStackName}/Config/OTP/UsernameTwo"
-      Description: "For setting the UsernameTwo env var config value. This is the email address of the account holder."
+      Name: !Sub "/tests/${AMFStackName}/Config/Users/OTPUsernameTwo"
+      Description: "OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -75,12 +75,12 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
-
+#
   EnvironmentSecretKeyUserSecretOne:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub "/tests/${AMFStackName}/Config/KeyUser/UsernameOne"
-      Description: !Sub "For setting the ${Environment} env var value for UsernameOne's configuration value."
+      Description: "OTP Username secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -95,11 +95,87 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
-  EnvironmentSecretKeyUserSecretTwo:
+  SMSUsernameOneSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/tests/${AMFStackName}/Config/KeyUser/UsernameTwo"
-      Description: !Sub "For setting the ${Environment} env var value for UsernameTwo's configuration value."
+      Name: !Sub "/tests/${AMFStackName}/Config/Users/SMSUsernameOne"
+      Description: "SMS Username secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  DeleteOTPUsernameOneSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/Users/DeleteOTPUsernameOne"
+      Description: "Delete OTP Username secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  OTPUserKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/Auth/OTPUserKey"
+      Description: "Auth OTP User Key secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  AuthSMSSecurityCodeSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/Auth/SMSSecurityCode"
+      Description: "Auth SMS Security Code secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  AuthEmailSecurityCodeSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/Auth/EmailSecurityCode"
+      Description: "Auth SMS Security Code secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -117,8 +193,8 @@ Resources:
   SignInPasswordSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/Password"
-      Description: "For setting the SignIn password env var config value."
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/SignInPassword"
+      Description: "Sign In Password secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -133,11 +209,11 @@ Resources:
         - Key: Source
           Value: !Ref SourceTagValue
 
-  NewSignInPasswordSecret:
+  UKMobileNumberSecret:
     Type: AWS::SecretsManager::Secret
     Properties:
-      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewPassword"
-      Description: "For setting the NewPassword env var config value."
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/UkMobileNumber"
+      Description: "UK Mobile Number secret used to run QA tests against the Account Management Frontend"
       SecretString: "please-set-me"
       KmsKeyId: !GetAtt SecretsKmsKey.KeyId
       Tags:
@@ -151,12 +227,191 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
+
+  NewUkMobileNumberSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewUkMobileNumber"
+      Description: "New UK Mobile Number secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  InternationalMobileNumberSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InternationalMobileNumber"
+      Description: "International Mobile Number secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  NewInternationalMobileNumberSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewInternationalMobileNumber"
+      Description: "New International Mobile Number secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  DuplicateUKMobileNumberSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/DuplicateUkMobileNumber"
+      Description: "Duplicate UK Mobile Number secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  DuplicateInternationalMobileNumberSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/DuplicateInternationalMobileNumber"
+      Description: "Duplicate International Mobile Number secret used to run QA tests against the Account Management Frontend"
+      SecretString: "please-set-me"
+      KmsKeyId: !GetAtt SecretsKmsKey.KeyId
+      Tags:
+        - Key: Product
+          Value: !Ref ProductTagValue
+        - Key: System
+          Value: !Ref SystemTagValue
+        - Key: Environment
+          Value: !Ref Environment
+        - Key: Owner
+          Value: !Ref OwnerTagValue
+        - Key: Source
+          Value: !Ref SourceTagValue
+
+  SignInPasswordMismatchSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/SignInPasswordMismatch"
+      Description: "Sign In Password Mismatch Password parameter used to run QA tests against the Account Management Frontend"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  NewPasswordSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/NewPassword"
+      Description: "New Password parameter used to run QA tests against the Account Management Frontend"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
 
   InvalidPasswordSSM:
     Type: AWS::SSM::Parameter
     Properties:
-      Description: "SSM for invalid password env var configuration value."
       Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidPassword"
+      Description: "Invalid Password parameter used to run QA tests against the Account Management Frontend"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  InvalidSecurityCodeSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidSecurityCode"
+      Description: "Invalid Security Code parameter used to run QA tests against the Account Management Frontend"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  IncorrectSecurityCodeSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/IncorrectSecurityCode"
+      Description: "Incorrect Security Code parameter used to run QA tests against the Account Management Frontend"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  InvalidUKMobileNumberSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidUkMobileNumber"
+      Description: "Invalid UK Mobile Number parameter used to run QA tests against the Account Management Frontend"
+      Type: String
+      Value: "please-set-me"
+      Tags:
+        Environment: !Ref Environment
+        Product: !Ref ProductTagValue
+        System: !Ref SystemTagValue
+        Owner: !Ref OwnerTagValue
+        Source: !Ref SourceTagValue
+
+  InvalidInternationalMobileNumberSSM:
+    Type: AWS::SSM::Parameter
+    Properties:
+      Name: !Sub "/tests/${AMFStackName}/Config/SignIn/InvalidInternationalMobileNumber"
+      Description: "Invalid International Mobile Number parameter used to run QA tests against the Account Management Frontend"
       Type: String
       Value: "please-set-me"
       Tags:
