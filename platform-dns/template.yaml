@@ -14,7 +14,7 @@ Parameters:
       - production
 
 Conditions:
-  IsProduction: !Equals [ !Ref Environment, production]
+  IsProduction: !Equals [!Ref Environment, production]
 
 Resources:
   HomeHostedZone:
@@ -35,11 +35,76 @@ Resources:
       Type: String
       Value: !GetAtt HomeHostedZone.Id
 
+  DmarcRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - _dmarc.home.account.gov.uk
+        - !Sub _dmarc.home.${Environment}.account.gov.uk
+      Type: TXT
+      TTL: 600
+      ResourceRecords:
+        - '"v=DMARC1;p=reject;sp=reject;adkim=s;aspf=s"'
+      HostedZoneId: !Ref HomeHostedZone
+
+  DkimRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - "*._domainkey.home.account.gov.uk"
+        - !Sub "*._domainkey.home.${Environment}.account.gov.uk"
+      Type: TXT
+      TTL: 600
+      ResourceRecords:
+        - '"v=DKIM1; p="'
+      HostedZoneId: !Ref HomeHostedZone
+
+  HomeSpfRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - home.account.gov.uk
+        - !Sub home.${Environment}.account.gov.uk
+      Type: TXT
+      TTL: 600
+      ResourceRecords:
+        - '"v=spf1 -all"'
+      HostedZoneId: !Ref HomeHostedZone
+
+  SubdomainSpfRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - "*.home.account.gov.uk"
+        - !Sub "*.home.${Environment}.account.gov.uk"
+      Type: TXT
+      TTL: 600
+      ResourceRecords:
+        - '"v=spf1 -all"'
+      HostedZoneId: !Ref HomeHostedZone
+
+  MxRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - home.account.gov.uk
+        - !Sub home.${Environment}.account.gov.uk
+      Type: MX
+      TTL: 600
+      ResourceRecords:
+        - "0 ."
+      HostedZoneId: !Ref HomeHostedZone
+
 Outputs:
   HomeHostedZoneNameServers:
     Value: !Join
-          - ","
-          - !GetAtt HomeHostedZone.NameServers
+      - ","
+      - !GetAtt HomeHostedZone.NameServers
     Export:
       Name: HomeHostedZoneNameServers
   HomeHostedZoneId:
