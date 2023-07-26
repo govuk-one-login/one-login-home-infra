@@ -14,7 +14,7 @@ Parameters:
       - production
 
 Conditions:
-  IsProduction: !Equals [ !Ref Environment, production]
+  IsProduction: !Equals [!Ref Environment, production]
 
 Resources:
   HomeHostedZone:
@@ -35,11 +35,23 @@ Resources:
       Type: String
       Value: !GetAtt HomeHostedZone.Id
 
+  DmarcRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - _dmarc.home.account.gov.uk
+        - !Sub _dmarc.home.${Environment}.account.gov.uk
+      Type: TXT
+      ResourceRecords:
+        - '"v=DMARC1;p=reject;sp=reject;adkim=s;aspf=s"'
+      HostedZoneId: !Ref HomeHostedZone
+
 Outputs:
   HomeHostedZoneNameServers:
     Value: !Join
-          - ","
-          - !GetAtt HomeHostedZone.NameServers
+      - ","
+      - !GetAtt HomeHostedZone.NameServers
     Export:
       Name: HomeHostedZoneNameServers
   HomeHostedZoneId:
