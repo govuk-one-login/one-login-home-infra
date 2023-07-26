@@ -43,6 +43,7 @@ Resources:
         - _dmarc.home.account.gov.uk
         - !Sub _dmarc.home.${Environment}.account.gov.uk
       Type: TXT
+      TTL: 600
       ResourceRecords:
         - '"v=DMARC1;p=reject;sp=reject;adkim=s;aspf=s"'
       HostedZoneId: !Ref HomeHostedZone
@@ -55,6 +56,7 @@ Resources:
         - "*._domainkey.home.account.gov.uk"
         - !Sub "*._domainkey.home.${Environment}.account.gov.uk"
       Type: TXT
+      TTL: 600
       ResourceRecords:
         - '"v=DKIM1; p="'
       HostedZoneId: !Ref HomeHostedZone
@@ -67,6 +69,7 @@ Resources:
         - home.account.gov.uk
         - !Sub home.${Environment}.account.gov.uk
       Type: TXT
+      TTL: 600
       ResourceRecords:
         - '"v=spf1 -all"'
       HostedZoneId: !Ref HomeHostedZone
@@ -79,6 +82,7 @@ Resources:
         - "*.home.account.gov.uk"
         - !Sub "*.home.${Environment}.account.gov.uk"
       Type: TXT
+      TTL: 600
       ResourceRecords:
         - '"v=spf1 -all"'
       HostedZoneId: !Ref HomeHostedZone
@@ -91,8 +95,9 @@ Resources:
         - home.account.gov.uk
         - !Sub home.${Environment}.account.gov.uk
       Type: MX
+      TTL: 600
       ResourceRecords:
-        - '"0 ."'
+        - "0 ."
       HostedZoneId: !Ref HomeHostedZone
 
 Outputs:
