@@ -59,6 +59,30 @@ Resources:
         - '"v=DKIM1; p="'
       HostedZoneId: !Ref HomeHostedZone
 
+  HomeSpfRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - home.account.gov.uk
+        - !Sub home.${Environment}.account.gov.uk
+      Type: TXT
+      ResourceRecords:
+        - '"v=spf1 -all"'
+      HostedZoneId: !Ref HomeHostedZone
+
+  SubdomainSpfRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - "*.home.account.gov.uk"
+        - !Sub "*.home.${Environment}.account.gov.uk"
+      Type: TXT
+      ResourceRecords:
+        - '"v=spf1 -all"'
+      HostedZoneId: !Ref HomeHostedZone
+
 Outputs:
   HomeHostedZoneNameServers:
     Value: !Join
