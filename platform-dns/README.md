@@ -1,6 +1,7 @@
 # Accounts - DNS Hosted Zones
 
 ## Intro
+
 The CloudFormation template creates a hosted zone for `<subdomain>.account.gov.uk`
 or `<subdomain>.<environment>.account.gov.uk` if environment is not `production`.
 
@@ -15,15 +16,24 @@ terraform file in the [di-infrastucture](https://github.com/alphagov/di-infrastr
 N.B. the hosted zone(s) created by this template are retained even when the Stack is deleted.
 
 ### Domains
+
 The template creates a Hosted Zone for the following subdomain(s):
- - `home`
+
+- `home`
+
+### DNS Records
+
+The template also sets DNS records for SPF, DKIM and DMARC policies that instruct email clients to
+reject any emails coming from the domain.
 
 ## Deployment
+
 To deploy the template to the appropriate AWS account, ensure you are at the root of the project.
 
 Replace `<environment>` with `dev`, `build`, `staging`, `integration`, `production` in either of the commands below.
 
 ### Creating a New Stack
+
 ```bash
 gds-cli aws di-account-<environment>-admin \
 aws cloudformation create-stack --stack-name dns-zones-<environment> \
@@ -35,6 +45,7 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ```
 
 ### Updating the Stack
+
 ```bash
 gds-cli aws di-account-<environment>-admin \
 aws cloudformation update-stack --stack-name dns-zones-<environment> \
@@ -46,8 +57,9 @@ Key=Environment,Value="<environment>" Key=Owner,Value="govuk-accounts-tech@digit
 ```
 
 ### Stack Outputs
-| Type          | Name                                                  | Description                         |
-|---------------|-------------------------------------------------------|-------------------------------------|
-| Stack Export  | `HomeHostedZoneNameServers`                           | Comma separated list of Nameservers |
-| Stack Export  | `HomeHostedZoneId`                                    | Id of the Route 53 Hosted Zone      |
-| SSM Parameter | `/<environment>/Platform/Route53/HostedZone/Home`     | Id of the Route 53 Hosted Zone      |
+
+| Type          | Name                                              | Description                         |
+| ------------- | ------------------------------------------------- | ----------------------------------- |
+| Stack Export  | `HomeHostedZoneNameServers`                       | Comma separated list of Nameservers |
+| Stack Export  | `HomeHostedZoneId`                                | Id of the Route 53 Hosted Zone      |
+| SSM Parameter | `/<environment>/Platform/Route53/HostedZone/Home` | Id of the Route 53 Hosted Zone      |
