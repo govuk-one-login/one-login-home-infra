@@ -83,6 +83,18 @@ Resources:
         - '"v=spf1 -all"'
       HostedZoneId: !Ref HomeHostedZone
 
+  MxRecord:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      Name: !If
+        - IsProduction
+        - home.account.gov.uk
+        - !Sub home.${Environment}.account.gov.uk
+      Type: MX
+      ResourceRecords:
+        - '"0 ."'
+      HostedZoneId: !Ref HomeHostedZone
+
 Outputs:
   HomeHostedZoneNameServers:
     Value: !Join
