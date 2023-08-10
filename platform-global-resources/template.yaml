@@ -109,6 +109,20 @@ Resources:
             CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-AWSKBIhits"
             SampledRequestsEnabled: false
+        - Name: RequestRateLimit
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 429
+          Priority: 40
+          Statement:
+            RateBasedStatement:
+              AggregateKeyType: "IP"
+              Limit: 700
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: true
+            MetricName: !Sub "${AWS::StackName}-RequestRateLimitHits"
+            SampledRequestsEnabled: false
       VisibilityConfig:
         CloudWatchMetricsEnabled: true
         MetricName: !Sub "${AWS::StackName}-WAFv2hits"
@@ -136,6 +150,20 @@ Resources:
         Allow: { }
       Scope: CLOUDFRONT
       Rules:
+        - Name: RequestRateLimit
+          Action:
+            Block:
+              CustomResponse:
+                ResponseCode: 429
+          Priority: 10
+          Statement:
+            RateBasedStatement:
+              AggregateKeyType: "IP"
+              Limit: 700
+          VisibilityConfig:
+            CloudWatchMetricsEnabled: true
+            MetricName: !Sub "${AWS::StackName}-RequestRateLimitHits"
+            SampledRequestsEnabled: false
         - Name: AWS-AWMManagedRuleCommonRuleSet
           OverrideAction:
             None: { }
