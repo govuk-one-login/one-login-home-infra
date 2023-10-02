@@ -37,12 +37,12 @@ Parameters:
 
 Conditions:
   IsExternal: !Or
-    - !Equals [ !Ref Environment, production ]
-    - !Equals [ !Ref Environment, integration ]
+    - !Equals [!Ref Environment, production]
+    - !Equals [!Ref Environment, integration]
   IsInternal: !Or
-    - !Equals [ !Ref Environment, dev ]
-    - !Equals [ !Ref Environment, build ]
-    - !Equals [ !Ref Environment, staging ]
+    - !Equals [!Ref Environment, dev]
+    - !Equals [!Ref Environment, build]
+    - !Equals [!Ref Environment, staging]
 
 Mappings:
   PlatformConfiguration:
@@ -61,7 +61,6 @@ Resources:
   #
   # WAFv2 WebACL
   #
-
 
   WebACLInternal:
     Condition: IsInternal
@@ -147,7 +146,7 @@ Resources:
     Properties:
       Name: !Sub "${AWS::StackName}-WebACL"
       DefaultAction:
-        Allow: { }
+        Allow: {}
       Scope: CLOUDFRONT
       Rules:
         - Name: RequestRateLimit
@@ -166,7 +165,7 @@ Resources:
             SampledRequestsEnabled: false
         - Name: AWS-AWMManagedRuleCommonRuleSet
           OverrideAction:
-            None: { }
+            None: {}
           Priority: 20
           Statement:
             ManagedRuleGroupStatement:
@@ -179,7 +178,7 @@ Resources:
         - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet
           Priority: 30
           OverrideAction:
-            None: { }
+            None: {}
           Statement:
             ManagedRuleGroupStatement:
               VendorName: AWS
@@ -268,7 +267,8 @@ Resources:
     Properties:
       LogDestinationConfigs:
         - !Sub "arn:aws:logs:${AWS::Region}:${AWS::AccountId}:log-group:${WebACLLogGroup}"
-      ResourceArn: !If [IsInternal, !GetAtt WebACLInternal.Arn, !GetAtt WebACLExternal.Arn]
+      ResourceArn:
+        !If [IsInternal, !GetAtt WebACLInternal.Arn, !GetAtt WebACLExternal.Arn]
 
   WebACLLogGroupCSLSSubscription:
     Type: AWS::Logs::SubscriptionFilter
@@ -333,15 +333,17 @@ Resources:
     Properties:
       DomainName: !Sub
         - "${DNSSUFFIX}"
-        - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
+        - DNSSUFFIX: !FindInMap [PlatformConfiguration, !Ref Environment, home]
       SubjectAlternativeNames:
         - !Sub
           - "*.${DNSSUFFIX}"
-          - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
+          - DNSSUFFIX:
+              !FindInMap [PlatformConfiguration, !Ref Environment, home]
       DomainValidationOptions:
         - DomainName: !Sub
             - "${DNSSUFFIX}"
-            - DNSSUFFIX: !FindInMap [ PlatformConfiguration, !Ref Environment, home ]
+            - DNSSUFFIX:
+                !FindInMap [PlatformConfiguration, !Ref Environment, home]
           ValidationDomain: !Ref ValidationDomain
       ValidationMethod: DNS
       Tags:
@@ -357,7 +359,6 @@ Resources:
           Value: !Ref OwnerTagValue
         - Key: Source
           Value: !Ref SourceTagValue
-
 
 Outputs:
   WAFv2WebACLARN:
