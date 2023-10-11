@@ -13,4 +13,7 @@ A repo for manually deployed CloudFormation templates
   - [DNS Certs](platform-dns-certs/README.md)
   - [Global Resource](platform-global-resources/README.md)
 - [Shared Redis](shared-redis/README.md)
--
+
+
+## Deploying
+Each cloudformation stack has it's own readme with instructions how to deploy the change. eg [Global Resource](platform-global-resources/README.md)
