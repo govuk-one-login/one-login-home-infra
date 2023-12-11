@@ -31,7 +31,7 @@ Parameters:
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
-    Default: alphagov/di-accounts-infra/iam-permissions/template.yaml
+    Default: govuk-one-login/di-accounts-infra/iam-permissions/template.yaml
 
 Resources:
   ControlTowerRole:
