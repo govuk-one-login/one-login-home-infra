@@ -33,7 +33,7 @@ Parameters:
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
-    Default: alphagov/di-accounts-infra/platform-alarming/template.yaml
+    Default: govuk-one-login/di-accounts-infra/platform-alarming/template.yaml
   SystemTagValue:
     Description: Value for the System Tag
     Type: String

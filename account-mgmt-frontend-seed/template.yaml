@@ -48,7 +48,7 @@ Parameters:
   SourceTagValue:
     Description: Value for the Source Tag
     Type: String
-    Default: alphagov/di-accounts-infra/account-mgmt-frontend-seed/template.yaml
+    Default: govuk-one-login/di-accounts-infra/account-mgmt-frontend-seed/template.yaml
 
 Resources:
   JwtSigningKey:

@@ -1,6 +1,6 @@
-# di-accounts-infra
+# One Login Home Infra
 
-## Accounts Platform codebase
+## Account Management Platform codebase
 
 A repo for manually deployed CloudFormation templates
 
@@ -12,5 +12,3 @@ A repo for manually deployed CloudFormation templates
   - [DNS](platform-dns/README.md)
   - [DNS Certs](platform-dns-certs/README.md)
   - [Global Resource](platform-global-resources/README.md)
-- [Shared Redis](shared-redis/README.md)
--
