@@ -1,6 +1,6 @@
-# di-accounts-infra
+# One Login Home Infra
 
-## Accounts Platform codebase
+## Account Management Platform codebase
 
 A repo for manually deployed CloudFormation templates
 
