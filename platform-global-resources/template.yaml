@@ -43,7 +43,6 @@ Conditions:
     - !Equals [!Ref Environment, dev]
     - !Equals [!Ref Environment, build]
     - !Equals [!Ref Environment, staging]
-  AllowPenTesting: !Equals [!Ref Environment, staging]
 
 Mappings:
   PlatformConfiguration:
@@ -85,24 +84,10 @@ Resources:
             CloudWatchMetricsEnabled: true
             MetricName: !Sub "${AWS::StackName}-WAFGDSIPhits"
             SampledRequestsEnabled: false
-        - !If
-          - AllowPenTesting
-          - Name: PenTestingIPs
-            Action:
-              Allow: {}
-            Priority: 20
-            Statement:
-              IPSetReferenceStatement:
-                Arn: !GetAtt WAFv2PenTestingIPSet.Arn
-            VisibilityConfig:
-              CloudWatchMetricsEnabled: true
-              MetricName: !Sub "${AWS::StackName}-WAFPenTestingIPhits"
-              SampledRequestsEnabled: false
-          - !Ref AWS::NoValue
         - Name: AWS-AWMManagedRuleCommonRuleSet
           OverrideAction:
             Count: {}
-          Priority: 30
+          Priority: 20
           Statement:
             ManagedRuleGroupStatement:
               Name: AWSManagedRulesCommonRuleSet
@@ -112,7 +97,7 @@ Resources:
             MetricName: !Sub "${AWS::StackName}-AWSCRShits"
             SampledRequestsEnabled: false
         - Name: AWS-AWSManagedRulesKnownBadInputsRuleSet
-          Priority: 40
+          Priority: 30
           OverrideAction:
             None: {}
           Statement:
@@ -128,7 +113,7 @@ Resources:
             Block:
               CustomResponse:
                 ResponseCode: 429
-          Priority: 50
+          Priority: 40
           Statement:
             RateBasedStatement:
               AggregateKeyType: "IP"
@@ -253,31 +238,6 @@ Resources:
           Value: !Ref Environment
         - Key: Name
           Value: !Sub "${AWS::StackName}-WAFv2GDSIPSet"
-        - Key: Owner
-          Value: !Ref OwnerTagValue
-        - Key: Source
-          Value: !Ref SourceTagValue
-
-  WAFv2PenTestingIPSet:
-    Condition: AllowPenTesting
-    Type: AWS::WAFv2::IPSet
-    Properties:
-      Addresses:
-        - "51.142.180.30/32"
-        - "185.120.72.241/32"
-        - "185.120.72.242/32"
-        - "185.120.72.243/32"
-      IPAddressVersion: IPV4
-      Scope: CLOUDFRONT
-      Tags:
-        - Key: Product
-          Value: !Ref ProductTagValue
-        - Key: System
-          Value: !Ref SystemTagValue
-        - Key: Environment
-          Value: !Ref Environment
-        - Key: Name
-          Value: !Sub "${AWS::StackName}-WAFv2PenTestingIPSet"
         - Key: Owner
           Value: !Ref OwnerTagValue
         - Key: Source
