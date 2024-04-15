@@ -247,7 +247,7 @@ Resources:
     Type: AWS::Logs::LogGroup
     Properties:
       LogGroupName: !Sub "aws-waf-logs-${AWS::StackName}"
-      RetentionInDays: 1
+      RetentionInDays: 30
       KmsKeyId: !GetAtt WAFLoggingKmsKey.Arn
       Tags:
         - Key: Product
