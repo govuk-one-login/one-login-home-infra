@@ -17,7 +17,7 @@ terraform {
 }
 
 provider "aws" {
-  allowed_account_ids = [""]
+  allowed_account_ids = ["654654326096"] #di-account-test-id
   region              = "eu-west-2"
 }
 
