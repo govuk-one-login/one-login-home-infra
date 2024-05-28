@@ -20,15 +20,17 @@ module "slack-notifications" {
   }
 
   tags_custom = {
-    System = "DI Account Home"
+    System = "DIAccountHome"
+    Product = "GovUKOneLogin"
+    Environment = "Test"
   }
 }
 
 module "github-identity" {
-  source     = "git@github.com:govuk-one-login/ipv-terraform-modules.git//secure-pipeline/github-identity-core"
+  source     = "git@github.com:govuk-one-login/ipv-terraform-modules.git//secure-pipeline/github-identity-provider"
   stack_name = "github-identity"
   parameters = {
-    Environment = "dev"
+    Environment = "demo"
   }
 
   tags = {
@@ -47,7 +49,7 @@ module "vpc" {
     ZoneBEIPAllocationId      = "none"
     ZoneCEIPAllocationId      = "none"
     VpcLinkEnabled            = "Yes"
-    AllowedDomains            = ""
+    AllowedDomains            = "none"
     LogsApiEnabled            = "Yes"
     CloudWatchApiEnabled      = "Yes"
     XRayApiEnabled            = "Yes"

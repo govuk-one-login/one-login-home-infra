@@ -10,9 +10,9 @@ module "home-backend-pipeline" {
   stack_name = "home-backend-pipeline"
   parameters = {
     SAMStackName    = "home-backend"
-    Environment     = "dev"
+    Environment     = "demo"
     VpcStackName    = "vpc"
-    IncludePromotion = "no"
+    IncludePromotion = "No"
     # AWSOrganizationId          = data.aws_organizations_organization.gds.id
     LogRetentionDays           = 7
     SigningProfileArn          = data.aws_cloudformation_stack.aws-signer.outputs["SigningProfileArn"]
@@ -32,9 +32,9 @@ module "home-stubs-pipeline" {
   stack_name = "home-stubs-pipeline"
   parameters = {
     SAMStackName    = "home-stubs"
-    Environment     = "dev"
+    Environment     = "demo"
     VpcStackName    = "vpc"
-    IncludePromotion = "no"
+    IncludePromotion = "No"
     # AWSOrganizationId          = data.aws_organizations_organization.gds.id
     LogRetentionDays           = 7
     SigningProfileArn          = data.aws_cloudformation_stack.aws-signer.outputs["SigningProfileArn"]

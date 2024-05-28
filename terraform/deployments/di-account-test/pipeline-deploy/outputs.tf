@@ -12,12 +12,12 @@ output "home-backend-pipeline_stack_outputs" {
 output "home-backend-pipeline_stack_tags" {
   value = module.home-backend-pipeline.stack_tags
 }
-output "waf-acl-pipeline_stack_id" {
-  value = module.waf-acl-pipeline.stack_id
+output "home-stubs-pipeline_stack_id" {
+  value = module.home-stubs-pipeline.stack_id
 }
-output "waf-acl-pipeline_stack_outputs" {
-  value = module.waf-acl-pipeline.stack_outputs
+output "home-stubs-pipeline_stack_outputs" {
+  value = module.home-stubs-pipeline.stack_outputs
 }
-output "waf-acl-pipeline_stack_tags" {
-  value = module.waf-acl-pipeline.stack_tags
+output "home-stubs-pipeline_stack_tags" {
+  value = module.home-stubs-pipeline.stack_tags
 }

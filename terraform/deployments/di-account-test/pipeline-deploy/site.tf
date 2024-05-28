@@ -2,11 +2,11 @@ terraform {
   required_version = ">= 1.3.0"
 
   # Comment out when bootstrapping
- # backend "s3" {
-#    bucket = "di-account-home-tfstate"
-#    key    = "di-account-home/pipeline_deploy.tfstate"
-#    region = "eu-west-2"
-#  }
+  backend "s3" {
+    bucket = "di-account-test-tfstate"
+    key    = "di-account-test/pipeline_deploy.tfstate"
+    region = "eu-west-2"
+  }
 
   required_providers {
     aws = {
