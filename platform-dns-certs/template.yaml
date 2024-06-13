@@ -8,6 +8,7 @@ Parameters:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
+      - demo
       - dev
       - build
       - staging
@@ -16,6 +17,8 @@ Parameters:
 
 Mappings:
   PlatformConfiguration:
+    demo:
+      home: home.demo.account.gov.uk
     dev:
       home: home.dev.account.gov.uk
     build:
