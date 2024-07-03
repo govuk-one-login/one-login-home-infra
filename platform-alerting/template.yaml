@@ -18,6 +18,7 @@ Parameters:
     Description: The name of the environment to deploy to
     Type: String
     AllowedValues:
+      - "demo"
       - "build"
       - "staging"
       - "integration"
