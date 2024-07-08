@@ -21,3 +21,12 @@ output "home-stubs-pipeline_stack_outputs" {
 output "home-stubs-pipeline_stack_tags" {
   value = module.home-stubs-pipeline.stack_tags
 }
+output "home-data-backend-pipeline_stack_id" {
+  value = module.home-data-backend-pipeline.stack_id
+}
+output "home-data-backend-pipeline_stack_outputs" {
+  value = module.home-data-backend-pipeline.stack_outputs
+}
+output "home-data-backend-pipeline_stack_tags" {
+  value = module.home-data-backend-pipeline.stack_tags
+}
