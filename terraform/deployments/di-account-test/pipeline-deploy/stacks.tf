@@ -18,8 +18,6 @@ module "home-backend-pipeline" {
     SigningProfileArn          = data.aws_cloudformation_stack.aws-signer.outputs["SigningProfileArn"]
     SigningProfileVersionArn   = data.aws_cloudformation_stack.aws-signer.outputs["SigningProfileVersionArn"]
     OneLoginRepositoryName     = "di-account-management-backend"
-    SlackNotificationType      = "Failures"
-    BuildNotificationStackName = "di-account-test-notifications"
   }
 
   tags_custom = {
@@ -40,8 +38,6 @@ module "home-stubs-pipeline" {
     SigningProfileArn          = data.aws_cloudformation_stack.aws-signer.outputs["SigningProfileArn"]
     SigningProfileVersionArn   = data.aws_cloudformation_stack.aws-signer.outputs["SigningProfileVersionArn"]
     OneLoginRepositoryName     = "account-management-stubs"
-    SlackNotificationType      = "Failures"
-    BuildNotificationStackName = "di-account-test-notifications"
   }
 
   tags_custom = {

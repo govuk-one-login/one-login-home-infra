@@ -11,21 +11,6 @@ module "aws-signer" {
   }
 }
 
-module "slack-notifications" {
-  source     = "git@github.com:govuk-one-login/ipv-terraform-modules.git//secure-pipeline/slack-notifications"
-  stack_name = "di-account-test-notifications"
-  parameters = {
-    SlackChannelId   = "C04D3SQNJ4B"
-    SlackWorkspaceId = "T8GT9416G"
-  }
-
-  tags_custom = {
-    System = "DIAccountHome"
-    Product = "GovUKOneLogin"
-    Environment = "Test"
-  }
-}
-
 module "github-identity" {
   source     = "git@github.com:govuk-one-login/ipv-terraform-modules.git//secure-pipeline/github-identity-provider"
   stack_name = "github-identity"
