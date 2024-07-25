@@ -2,7 +2,7 @@ module "aws-signer" {
   source     = "git@github.com:govuk-one-login/ipv-terraform-modules.git//secure-pipeline/aws-signer"
   stack_name = "aws-signer-pipeline"
   parameters = {
-    Environment = "dev"
+    Environment = "demo"
     System      = "DI Account Home"
   }
 
@@ -61,4 +61,20 @@ module "vpc" {
   tags = {
     System = "DI Account Home"
   }
+}
+
+resource "aws_s3_bucket" "bucket" {
+  bucket = "cloudformation-test-bucket-1"
+  tags = {
+    Name        = "My bucket"
+    Environment = "demo"
+  }
+}
+
+resource "aws_cloudformation_stack" "dns-certs"{
+  name = "dns-certs"
+  template_url = "https://cfn-to-tf.s3.eu-west-2.amazonaws.com/template.yaml"
+    parameters = {
+    Environment = "demo"
+   }
 }
