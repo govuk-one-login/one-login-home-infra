@@ -12,3 +12,24 @@ A repo for manually deployed CloudFormation templates
   - [DNS](platform-dns/README.md)
   - [DNS Certs](platform-dns-certs/README.md)
   - [Global Resource](platform-global-resources/README.md)
+
+
+# Developer Guide
+
+### Gitlint
+
+This repository uses [Gitlint](https://jorisroovers.com/gitlint/latest/) to lint git commit messages.
+
+Install Gitlint by running:
+
+```bash
+pip install pre-commit # or `brew install pre-commit` if using the Homebrew package manager
+```
+
+```bash
+pip install gitlint # or `brew install gitlint` if using the Homebrew package manager
+```
+
+```bash
+pre-commit install --hook-type commit-msg
+```
