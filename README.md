@@ -2,7 +2,10 @@
 
 ## Account Management Platform codebase
 
-A repo for manually deployed CloudFormation templates
+A repo for manually deployed CloudFormation templates.
+These are deployed either with the AWS CLI, or managed by Terraform.
+
+### AWS CLI
 
 - [Account Management Frontend](account-mgmt-frontend-seed/README.md)
 - [IAM Permissions](iam-permissions/README.md)
@@ -13,6 +16,20 @@ A repo for manually deployed CloudFormation templates
   - [DNS Certs](platform-dns-certs/README.md)
   - [Global Resource](platform-global-resources/README.md)
 
+### Terraform
+
+- [Backup as a service monitoring](terraform/backup.tf)
+
+The Terraform uses separate backend configuration and variables files for each environment.
+To deploy into eg. staging:
+
+```sh
+cd terraform
+aws sso login --profile di-account-staging-admin
+AWS_PROFILE=di-account-staging-admin terraform init -backend-config=env/backend/staging.tfbackend
+AWS_PROFILE=di-account-staging-admin terraform plan -var-file=env/staging.tfvars
+AWS_PROFILE=di-account-staging-admin terraform apply -var-file=env/staging.tfvars
+```
 
 # Developer Guide
 
