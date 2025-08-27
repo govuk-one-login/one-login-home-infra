@@ -13,3 +13,17 @@ resource "aws_cloudformation_stack" "backup_vault_monitoring_stack" {
 
   capabilities = ["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
 }
+
+resource "aws_cloudformation_stack" "restore_testing_stack" {
+  count = var.environment == "staging" ? 1 : 0
+  # See https://github.com/govuk-one-login/backup-as-a-service/blob/main/restore-testing/template.yaml
+  provider      = aws.london
+  name          = "backup-restore-testing"
+  template_body = file("./restore_testing.cf.yaml")
+
+  parameters = {
+    CronExpression = "cron(0 10 ? * 3#2 *)" # At 10:00 AM on the second Tuesday of each month (UTC+00:00)
+  }
+
+  capabilities = ["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
+}

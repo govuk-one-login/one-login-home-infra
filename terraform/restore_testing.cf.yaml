@@ -1,0 +1,95 @@
+# See https://github.com/govuk-one-login/backup-as-a-service/blob/main/restore-testing/template.yaml
+
+AWSTemplateFormatVersion: "2010-09-09"
+Description: >-
+  Generates a Restore Testing Plan and a Restore Testing Selection for automated,
+  periodic testing of Recovery Points.
+Parameters:
+  BackupRoleName:
+    Description: The name of the role used for backup
+    Type: String
+    Default: "central-backup-BackupRole"
+  CronExpression:
+    Description: A cron expression of restore test frequency
+    Type: String
+    Default: "cron(0 12 ? * 1 *)" # At 12:00 PM every Sunday (UTC+00:00)
+Resources:
+  RestoreTestingPlan:
+    Type: AWS::Backup::RestoreTestingPlan
+    Properties:
+      RecoveryPointSelection:
+        Algorithm: LATEST_WITHIN_WINDOW
+        ExcludeVaults:
+          # This vault is not managed by our policy
+          - !Sub "arn:aws:backup:${AWS::Region}:${AWS::AccountId}:backup-vault:Default"
+        IncludeVaults:
+          - "*"
+        RecoveryPointTypes:
+          - CONTINUOUS
+          - SNAPSHOT
+        SelectionWindowDays: 7
+      RestoreTestingPlanName: RestoreTestingPlan
+      ScheduleExpression: !Ref CronExpression
+      StartWindowHours: 1
+  DynamoDBRestoreTestingSelection:
+    Type: AWS::Backup::RestoreTestingSelection
+    Properties:
+      RestoreTestingSelectionName: DynamoDBRestoreTestingSelection
+      RestoreTestingPlanName: RestoreTestingPlan
+      IamRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/${BackupRoleName}"
+      ProtectedResourceArns:
+        # Test everything
+        - "*"
+      ProtectedResourceType: DynamoDB
+      RestoreMetadataOverrides:
+        encryptionType: KMS
+        kmsMasterKeyArn: !GetAtt RestoreTestingKMSKey.Arn
+      # We don't yet have any testing scripts, so leave this for now
+      # ValidationWindowHours: Integer
+  S3RestoreTestingSelection:
+    Type: AWS::Backup::RestoreTestingSelection
+    Properties:
+      RestoreTestingSelectionName: S3RestoreTestingSelection
+      RestoreTestingPlanName: RestoreTestingPlan
+      IamRoleArn: !Sub "arn:aws:iam::${AWS::AccountId}:role/${BackupRoleName}"
+      ProtectedResourceArns:
+        - "*"
+      ProtectedResourceType: S3
+      RestoreMetadataOverrides:
+        encryptionType: KMS
+        kmskey: !GetAtt RestoreTestingKMSKey.Arn # For reasons, syntax is different in S3
+      # ValidationWindowHours: Integer
+  RestoreTestingKMSKey:
+    Type: AWS::KMS::Key
+    Properties:
+      Description: KMS key for encrypting restored resources
+      Enabled: true
+      EnableKeyRotation: true
+      KeyPolicy:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:root"
+            Action:
+              - kms:*
+            Resource: "*"
+          - Effect: Allow
+            Principal:
+              AWS: !Sub "arn:aws:iam::${AWS::AccountId}:role/${BackupRoleName}"
+            Action:
+              - "kms:Encrypt"
+              - "kms:Decrypt"
+              - "kms:ReEncrypt*"
+              - "kms:DescribeKey"
+              - "kms:GenerateDataKey"
+              - "kms:GenerateDataKeyWithoutPlaintext"
+            Resource: "*"
+            Condition:
+              StringEquals:
+                "kms:ViaService": "backup.amazonaws.com"
+  RestoreTestingKeyAlias:
+    Type: AWS::KMS::Alias
+    Properties:
+      AliasName: !Sub "alias/${AWS::StackName}-key"
+      TargetKeyId: !GetAtt RestoreTestingKMSKey.Arn
