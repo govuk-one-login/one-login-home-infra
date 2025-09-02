@@ -1,4 +1,5 @@
 resource "aws_cloudformation_stack" "backup_vault_monitoring_stack" {
+  count = contains(["staging", "integration", "production"], var.environment) ? 1 : 0
   # See https://github.com/govuk-one-login/backup-as-a-service/blob/main/backup-vault-monitoring/template.yaml
   provider     = aws.london
   name         = "backup-vault-monitoring"
