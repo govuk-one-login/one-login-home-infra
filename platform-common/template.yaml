@@ -87,7 +87,7 @@ Resources:
   #
 
   # see https://govukverify.atlassian.net/wiki/spaces/PLAT/pages/3062726680/How+to+prepare+AWS+accounts+for+containing+SAM+deployment+pipelines#Grafana-metrics
-  GrafanaApiKey:
+  GrafanaApiKey: # checkov:skip=CKV_SECRET_6:Placeholder value, not a real secret
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: "pipeline-grafana-api-key"
