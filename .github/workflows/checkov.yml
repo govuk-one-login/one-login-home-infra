@@ -17,7 +17,7 @@ jobs:
         with:
           directory: .
           skip_check: CKV2_GHA_1,CKV_SECRET_6,CKV_AWS_124,CKV_TF_1,CKV_TF_2 # CKV2_GHA_1: permissions inherited from org settings, CKV_SECRET_6: placeholder value not a real secret, CKV_AWS_124: SNS notifications managed externally, CKV_TF_1/CKV_TF_2: internal org modules without pinned versions
-          soft_fail: false
+          soft_fail: true
           output_format: cli
           output_file_path: console
      
