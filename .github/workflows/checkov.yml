@@ -1,0 +1,26 @@
+name: Checkov
+
+on:
+  pull_request:
+  merge_group:
+
+jobs:
+  checkov:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@08c6903cd8c0fde910a37f88322edcfb5dd907a8 # v5.0.0 
+
+      - name: Checkov GitHub Action
+        uses: bridgecrewio/checkov-action@eec884fd62682f5f2b33e303e160d5e2fe8d89ec # v12.3052.0 
+        with:
+          directory: .
+          output_format: cli
+          output_file_path: console
+          # CKV2_GHA_1: permissions inherited from org settings,
+          # CKV_SECRET_6: placeholder value not a real secret,
+          # CKV_AWS_124: SNS notifications managed externally (backup-as-a-service), and
+          # CKV_TF_1/CKV_TF_2: low priority - skipped intentionally. Module sources point to govuk-one-login/ipv-terraform-modules
+          # which does not have automated ?ref= pin updates in consuming repos. Pinning requires manually fetching the latest
+          # tags from ipv-terraform-modules (git fetch --tags) and updating each source URL with ?ref=<tag> every time a module
+          # is updated. Until this is automated, the maintenance overhead outweighs the benefit.
+          skip_check: CKV2_GHA_1,CKV_SECRET_6,CKV_AWS_124,CKV_TF_1,CKV_TF_2 
