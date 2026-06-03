@@ -1,5 +1,15 @@
+default_install_hook_types: [commit-msg, pre-commit, pre-push]
+fail_fast: true
+
 repos:
-  - repo: https://github.com/jorisroovers/gitlint 
+  - repo: https://github.com/jorisroovers/gitlint
     rev: v0.19.1
-    hooks: 
+    hooks:
       - id: gitlint
+
+  - repo: https://github.com/Yelp/detect-secrets
+    rev: 5e141933554a0b74e7341841f318be21e895339c
+    hooks:
+      - id: detect-secrets
+        args: ["--baseline", ".secrets.baseline"]
+        stages: [pre-commit]
