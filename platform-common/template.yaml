@@ -1,4 +1,4 @@
-AWSTemplateFormatVersion: '2010-09-09'
+AWSTemplateFormatVersion: "2010-09-09"
 
 Description: >
   Externalises values referenced across multiple CloudFormation Stacks.
@@ -37,20 +37,6 @@ Resources:
   #
   # SSM Parameter
   #
-
-  CSLSLogsSubscriptionARN:
-    Type: AWS::SSM::Parameter
-    Properties:
-      Description: The CSLS CloudWatch Logs Destination ARN
-      Name: !Sub "/${Environment}/Platform/Logs/Subscription/CSLS/ARN"
-      Type: String
-      Value: "arn:aws:logs:eu-west-2:885513274347:destination:csls_cw_logs_destination_prodpython"
-      Tags:
-        Product: !Ref ProductTagValue
-        System: !Ref SystemTagValue
-        Environment: !Ref Environment
-        Owner: !Ref OwnerTagValue
-        Source: !Ref SourceTagValue
 
   GlobalWAFACLARN:
     Type: AWS::SSM::Parameter
