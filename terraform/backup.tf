@@ -12,5 +12,5 @@ resource "aws_cloudformation_stack" "backup_vault_monitoring_stack" {
     CreateChatBotRole = "No"
   }
 
-  capabilities = ["CAPABILITY_NAMED_IAM", "CAPABILITY_AUTO_EXPAND"]
+  capabilities = var.capabilities
 }
